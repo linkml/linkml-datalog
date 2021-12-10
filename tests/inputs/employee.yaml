@@ -1,0 +1,118 @@
+id: http://example.org/sample/sql
+
+default_curi_maps:
+  - semweb_context
+
+prefixes:
+  ex: http://example.org/
+  schema: http://schema.org/
+  linkml: https://w3id.org/linkml/
+
+imports:
+  - linkml:types
+
+default_prefix: ex
+
+subsets:
+  mysubset: {}
+
+types:
+  unitcode:
+    base: str
+    uri: xsd:string
+
+classes:
+
+  thing:
+  person:
+    is_a: thing
+    mixins:
+      - has aliases
+    slots:
+      - id
+      - name
+      - status
+      - has address
+      - category
+    slot_usage:
+      name:
+        required: true
+      id:
+        pattern: "^\\S+$"
+      status:
+        range:
+          person_status_enum
+
+
+  employee:
+    is_a: person
+    attributes:
+      start date:
+        range: date
+      is current: boolean
+      scores:
+        singular_name: score
+        multivalued: True
+        range: float
+
+  address:
+    is_a: thing
+    slots:
+      - id
+    slot_usage:
+      id:
+      street:
+      city:
+      country:
+      
+  organization:
+    is_a: thing
+    mixins:
+      - has aliases
+    slots:
+      - id
+      - part of
+    slot_usage:
+      has employees:
+        range: employee
+        multivalued: true
+      part of:
+        range: organization
+
+  has aliases:
+    mixin: true
+    slots:
+      - aliases
+
+slots:
+  id:
+    identifier: true
+  name:
+    range: string
+    slot_uri: schema:name
+  aliases:
+    singular_name: alias
+    multivalued: true
+  employees:
+    singular_name: employee
+    multivalued: true
+  has address:
+    range: address
+  fooz:
+    alias: barz
+  part of:
+    multivalued: true
+    range: thing
+  has part:
+    inverse: part of
+  status:
+  type:
+    slot_uri: rdf:type
+  category:
+    is_a: type
+
+enums:
+  person_status_enum:
+    permissible_values:
+      alive: is the person alive
+      deceased: is the person deceased

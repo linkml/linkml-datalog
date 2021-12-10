@@ -1,0 +1,23 @@
+id: http://example.org/interval
+
+default_curi_maps:
+  - semweb_context
+
+prefixes:
+  ex: http://example.org/
+  schema: http://schema.org/
+  linkml: https://w3id.org/linkml/
+
+imports:
+  - linkml:types
+
+default_prefix: ex
+
+classes:
+
+  c:
+    annotations:
+      - extension_tag: my_tag1
+        extension_value: my_value1
+      - extension_tag: my_tag2
+        extension_value: my_value2

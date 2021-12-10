@@ -1,0 +1,61 @@
+id: http://example.org/interval
+
+default_curi_maps:
+  - semweb_context
+
+prefixes:
+  ex: https://w3id.org/interval/
+  schema: http://schema.org/
+  linkml: https://w3id.org/linkml/
+
+imports:
+  - linkml:types
+
+default_prefix: ex
+
+
+classes:
+
+  thing:
+    slots:
+      - id
+      - name
+  interval:
+    is_a: thing
+    description: >-
+      Represents a sequence interval.
+
+      An example is GFF
+    slots:
+      - start
+      - end
+      - length
+
+
+slots:
+  id:
+    identifier: true
+  name:
+    range: string
+    slot_uri: schema:name
+  start:
+    description: >-
+      Point position at which interval starts.
+
+      starts from 1, counts bases
+    range: integer
+    required: true
+  end:
+    description: >-
+      Point position at which interval ends.
+
+      starts from 1, counts bases
+    range: integer
+    required: true
+  length:
+    range: integer
+    comments:
+      - eval>> end-start
+    annotations:
+      extension_tag: datalog
+      extension_value: foo
