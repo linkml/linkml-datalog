@@ -28,6 +28,23 @@ persons:
       "my name  has tabs"
       tables'
     age_in_years: 100001
+    has_familial_relationships:
+      - related_to: P:003
+        type: SIBLING_OF
+  - id: P:004
+    name: schmoe sr
+    has_familial_relationships:
+      - related_to: P:001
+        type: PARENT_OF
+    gender: cisgender man
+  - id: P:005
+    name: grandad schmoe
+    has_familial_relationships:
+      - related_to: P:004
+        type: PARENT_OF
+    gender: cisgender man
+
+
 #    current_address:
 #      street: 1 foo street
 #      city: foo city

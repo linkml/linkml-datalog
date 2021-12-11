@@ -12,6 +12,7 @@ class DatalogGeneratorTestCase(unittest.TestCase):
         gen = DatalogGenerator(fn)
         print(gen.serialize())
         self.assertEqual(True, True)
+        # TODO: proper test
 
 
 if __name__ == '__main__':

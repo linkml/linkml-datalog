@@ -15,6 +15,10 @@ prefixes:
   prov: http://www.w3.org/ns/prov#
   GSSO: http://purl.obolibrary.org/obo/GSSO_
   famrel: https://example.org/FamilialRelations#
+  P: https://example.org/P/
+  CODE: https://example.org/CODE/
+  ROR: https://example.org/ROR/
+  GEO: https://example.org/GEO/
 default_prefix: personinfo
 default_range: string
 
@@ -22,6 +26,52 @@ emit_prefixes:
   - rdf
   - rdfs
   - skos
+
+annotations:
+  datalog: |-
+    .decl has_familial_relationship_to(i: identifier, p: identifier, j: identifier)
+    .output has_familial_relationship_to
+    has_familial_relationship_to(i, p, j) :-
+        Person_has_familial_relationships(i, r),
+        FamilialRelationship_related_to(r, j),
+        FamilialRelationship_type(r, p).
+
+    Person_sibling_of(i, j) :-
+        has_familial_relationship_to(i, "https://example.org/FamilialRelations#01", j).
+
+    Person_parent_of(i, j) :-
+        has_familial_relationship_to(i, "https://example.org/FamilialRelations#02", j).
+
+    Person_child_of(i, j) :-
+        has_familial_relationship_to(i, "https://example.org/FamilialRelations#03", j).
+
+    Person_ancestor_of(i, j) :-
+            Person_parent_of(i, z),
+            Person_ancestor_of(z, j).
+
+    Person_ancestor_of(i, j) :-
+            Person_parent_of(i, j).
+
+    Person_grandparent_of(i, j) :-
+        Person_parent_of(i, z),
+        Person_parent_of(z, j).
+
+    Person_grandfather_of(i, j) :-
+        Person_grandparent_of(i, j),
+        is_man(i).
+
+    Person_grandmother_of(i, j) :-
+        Person_grandparent_of(i, j),
+        is_woman(i).
+
+    // GSSO-compliant definitions
+    .decl is_man(i: identifier)
+    .decl is_woman(i: identifier)
+    is_man(i) :- Person_gender(i, "http://purl.obolibrary.org/obo/GSSO_000372").
+    is_man(i) :- Person_gender(i, "http://purl.obolibrary.org/obo/GSSO_000371").
+    is_woman(i) :- Person_gender(i, "http://purl.obolibrary.org/obo/GSSO_000384").
+    is_woman(i) :- Person_gender(i, "http://purl.obolibrary.org/obo/GSSO_000385").
+
 
 classes:
 
@@ -52,12 +102,35 @@ classes:
       - has_employment_history
       - has_familial_relationships
       - has_medical_history
+      - sibling_of
+      - parent_of
+      - child_of
+      - father_of
+      - grandparent_of
+      - grandfather_of
+      - grandmother_of
+      - ancestor_of
+      - mother_of
+      - has_siblings
     slot_usage:
       primary_email:
         pattern: "^\\S+@[\\S+\\.]+\\S+"
     in_subset:
       - basic_subset
-  
+    rules:
+      preconditions:
+        slot_conditions:
+          has_familial_relationships:
+            has_member:
+              range_expression:
+                slot_conditions:
+                  type:
+                    equals_string: SIBLING_OF
+      postconditions:
+        slot_conditions:
+          has_siblings:
+            equals_string: true
+
   HasAliases:
     description: >-
       A mixin applied to any class that can have aliases/alternateNames
@@ -199,6 +272,34 @@ slots:
     minimum_value: 0
     maximum_value: 999
   related_to:
+    range: NamedThing
+  person_to_person_related_to:
+    range: Person
+    multivalued: true
+  ancestor_of:
+    is_a: person_to_person_related_to
+    annotations:
+      transitive_closure_of: parent_of
+  parent_of:
+    is_a: ancestor_of
+    inverse: child_of
+  child_of:
+    is_a: person_to_person_related_to
+  father_of:
+    is_a: parent_of
+  grandparent_of:
+    is_a: ancestor_of
+  grandfather_of:
+    is_a: grandparent_of
+  grandmother_of:
+    is_a: grandparent_of
+  mother_of:
+    is_a: person_to_person_related_to
+  sibling_of:
+    is_a: person_to_person_related_to
+    inverse: sibling_of
+  has_siblings:
+    range: boolean
   type:
   street:
   city:
@@ -250,12 +351,12 @@ enums:
         meaning: GSSO:009254
       nonbinary woman:
         meaning: GSSO:009253
-      transgender woman:
-        meaning: GSSO:000384
       transgender man:
         meaning: GSSO:000372
       cisgender man:
         meaning: GSSO:000371
+      transgender woman:
+        meaning: GSSO:000384
       cisgender woman:
         meaning: GSSO:000385
   DiagnosisType:

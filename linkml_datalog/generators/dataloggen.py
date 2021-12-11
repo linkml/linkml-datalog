@@ -1,5 +1,4 @@
 import os
-import re
 from typing import Union, TextIO, Optional, Set, List, Any, Callable, Dict, Tuple
 import logging
 
@@ -9,20 +8,11 @@ from jinja2 import Template
 from linkml_runtime.linkml_model.meta import SchemaDefinition, ClassDefinition, SlotDefinition, Element, \
     ClassDefinitionName, \
     SlotDefinitionName, \
-    TypeDefinition, TypeDefinitionName, ElementName
+    ElementName
 from linkml.utils.generator import Generator, shared_arguments
-from linkml.utils.typereferences import References
 from linkml_runtime.utils.formatutils import camelcase, underscore
 from linkml_runtime.utils.schemaview import SchemaView
-from rdflib import URIRef
-from rdflib.namespace import RDF, RDFS, SKOS
 
-prefixes: Dict[str, URIRef] = {
-    "RDF_TYPE": RDF['type']
-}
-
-RESERVED = ['range']
-CONSTRAINT_FAIL_ON_EVAL = 'constraint_fail_on_eval'
 
 template = """
 /**
@@ -45,6 +35,14 @@ template = """
 
 .decl validation_result(type: symbol, subject: symbol, instantiates: symbol, path: symbol, value: symbol, info:symbol)
 .output validation_result
+
+
+{% if 'datalog' in schemaview.schema.annotations %}
+// ------------------
+// -- SCHEMA RULES --
+// ------------------
+{{ schemaview.schema.annotations['datalog'].value }}
+{% endif %}
 
 // -------------
 // -- CLASSES --
@@ -77,12 +75,20 @@ template = """
     triple(i, "{{ gen.uri(s) }}", v).
 // TODO: inferring default values
 
+{% if s.inverse %}
+{% set inv = s.inverse %}
+{% set inv_range = gen.get_slot_range(inv) %}
+// Inverse of: {{inv}} range: {{inv_range}}
+{% set spred_inv = gen.class_slot_pred(inv_range, inv) %}
+{{ spred }}(i, v) :- {{ spred_inv }}(v, i). 
+{% endif %}
+
 {% if not s.multivalued %}
 validation_result(
   "sh:MaxCountConstraintComponent",
   i,
   "{{ cpred }}",
-  "TODO path",
+  "{{ s.name }}",
   v1,
   "") :-
     {{ spred }}(i, v1),
@@ -95,7 +101,7 @@ validation_result(
   "sh:MaxCountConstraintComponent",
   i,
   "{{ cpred }}",
-  "TODO path",
+  "{{ s.name }}",
   "",
   "") :-
     {{ cpred }}(i),
@@ -168,28 +174,11 @@ validation_result(
 
 """
 
-class DatalogTerm:
-    predicate: str
-
-class Declaration(DatalogTerm):
-    None
 
 class DatalogGenerator(Generator):
     """
     Generates Souffle datalog from a LinkML schema where the domain of discourse is RDF triples
 
-    Example output:
-
-    ```
-    // Slot: current_address
-    // The address at which a person currently lives
-    .decl current_address_asserted(s:symbol, o:symbol)
-    .decl current_address(s:symbol, o:symbol)
-    current_address_asserted(s,o) :- rdf(s, "<https://w3id.org/linkml/examples/personinfo/current_address>", o).
-    current_address(s,o) :- current_address_asserted(s,o).
-   ```
-
-    (OLDER EXPERIMENT?)
     """
     generatorname = os.path.basename(__file__)
     generatorversion = "0.1.1"
@@ -243,6 +232,19 @@ class DatalogGenerator(Generator):
 
     def meaning_uri(self, curie: str):
         return self.schemaview.expand_curie(curie)
+
+    def get_slot_range(self, sn: SlotDefinitionName):
+        """
+        TEMPORARY
+        """
+        sv = self.schemaview
+        slot = sv.get_slot(sn)
+        if slot.range:
+            return slot.range
+        elif slot.is_a:
+            return self.get_slot_range(slot.is_a)
+        else:
+            raise ValueError(f'No range for slot {sn}')
 
 
 @shared_arguments(DatalogGenerator)

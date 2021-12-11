@@ -1,5 +1,5 @@
 # Auto generated from personinfo.yaml by pythongen.py version: 0.9.0
-# Generation date: 2021-12-10T10:08:17
+# Generation date: 2021-12-10T17:42:58
 # Schema: personinfo
 #
 # id: https://w3id.org/linkml/examples/personinfo
@@ -36,11 +36,10 @@ FAMREL = CurieNamespace('famrel', 'https://example.org/FamilialRelations#')
 LINKML = CurieNamespace('linkml', 'https://w3id.org/linkml/')
 PERSONINFO = CurieNamespace('personinfo', 'https://w3id.org/linkml/examples/personinfo/')
 PROV = CurieNamespace('prov', 'http://www.w3.org/ns/prov#')
-RDF = CurieNamespace('rdf', 'http://example.org/UNKNOWN/rdf/')
+RDF = CurieNamespace('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
 RDFS = CurieNamespace('rdfs', 'http://www.w3.org/2000/01/rdf-schema#')
 SCHEMA = CurieNamespace('schema', 'http://schema.org/')
 SKOS = CurieNamespace('skos', 'http://example.org/UNKNOWN/skos/')
-XSD = CurieNamespace('xsd', 'http://www.w3.org/2001/XMLSchema#')
 DEFAULT_ = PERSONINFO
 
 
@@ -131,6 +130,16 @@ class Person(NamedThing):
     has_employment_history: Optional[Union[Union[dict, "EmploymentEvent"], List[Union[dict, "EmploymentEvent"]]]] = empty_list()
     has_familial_relationships: Optional[Union[Union[dict, "FamilialRelationship"], List[Union[dict, "FamilialRelationship"]]]] = empty_list()
     has_medical_history: Optional[Union[Union[dict, "MedicalEvent"], List[Union[dict, "MedicalEvent"]]]] = empty_list()
+    sibling_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    parent_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    child_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    father_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    grandparent_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    grandfather_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    grandmother_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    ancestor_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    mother_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
+    has_siblings: Optional[Union[bool, Bool]] = None
     aliases: Optional[Union[str, List[str]]] = empty_list()
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
@@ -163,6 +172,45 @@ class Person(NamedThing):
         if not isinstance(self.has_medical_history, list):
             self.has_medical_history = [self.has_medical_history] if self.has_medical_history is not None else []
         self.has_medical_history = [v if isinstance(v, MedicalEvent) else MedicalEvent(**as_dict(v)) for v in self.has_medical_history]
+
+        if not isinstance(self.sibling_of, list):
+            self.sibling_of = [self.sibling_of] if self.sibling_of is not None else []
+        self.sibling_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.sibling_of]
+
+        if not isinstance(self.parent_of, list):
+            self.parent_of = [self.parent_of] if self.parent_of is not None else []
+        self.parent_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.parent_of]
+
+        if not isinstance(self.child_of, list):
+            self.child_of = [self.child_of] if self.child_of is not None else []
+        self.child_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.child_of]
+
+        if not isinstance(self.father_of, list):
+            self.father_of = [self.father_of] if self.father_of is not None else []
+        self.father_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.father_of]
+
+        if not isinstance(self.grandparent_of, list):
+            self.grandparent_of = [self.grandparent_of] if self.grandparent_of is not None else []
+        self.grandparent_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.grandparent_of]
+
+        if not isinstance(self.grandfather_of, list):
+            self.grandfather_of = [self.grandfather_of] if self.grandfather_of is not None else []
+        self.grandfather_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.grandfather_of]
+
+        if not isinstance(self.grandmother_of, list):
+            self.grandmother_of = [self.grandmother_of] if self.grandmother_of is not None else []
+        self.grandmother_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.grandmother_of]
+
+        if not isinstance(self.ancestor_of, list):
+            self.ancestor_of = [self.ancestor_of] if self.ancestor_of is not None else []
+        self.ancestor_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.ancestor_of]
+
+        if not isinstance(self.mother_of, list):
+            self.mother_of = [self.mother_of] if self.mother_of is not None else []
+        self.mother_of = [v if isinstance(v, PersonId) else PersonId(v) for v in self.mother_of]
+
+        if self.has_siblings is not None and not isinstance(self.has_siblings, Bool):
+            self.has_siblings = Bool(self.has_siblings)
 
         if not isinstance(self.aliases, list):
             self.aliases = [self.aliases] if self.aliases is not None else []
@@ -389,7 +437,7 @@ class Relationship(YAMLRoot):
 
     started_at_time: Optional[Union[str, XSDDate]] = None
     ended_at_time: Optional[Union[str, XSDDate]] = None
-    related_to: Optional[str] = None
+    related_to: Optional[Union[str, NamedThingId]] = None
     type: Optional[str] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
@@ -399,8 +447,8 @@ class Relationship(YAMLRoot):
         if self.ended_at_time is not None and not isinstance(self.ended_at_time, XSDDate):
             self.ended_at_time = XSDDate(self.ended_at_time)
 
-        if self.related_to is not None and not isinstance(self.related_to, str):
-            self.related_to = str(self.related_to)
+        if self.related_to is not None and not isinstance(self.related_to, NamedThingId):
+            self.related_to = NamedThingId(self.related_to)
 
         if self.type is not None and not isinstance(self.type, str):
             self.type = str(self.type)
@@ -544,15 +592,15 @@ class GenderType(EnumDefinitionImpl):
         setattr(cls, "nonbinary woman",
                 PermissibleValue(text="nonbinary woman",
                                  meaning=GSSO["009253"]) )
-        setattr(cls, "transgender woman",
-                PermissibleValue(text="transgender woman",
-                                 meaning=GSSO["000384"]) )
         setattr(cls, "transgender man",
                 PermissibleValue(text="transgender man",
                                  meaning=GSSO["000372"]) )
         setattr(cls, "cisgender man",
                 PermissibleValue(text="cisgender man",
                                  meaning=GSSO["000371"]) )
+        setattr(cls, "transgender woman",
+                PermissibleValue(text="transgender woman",
+                                 meaning=GSSO["000384"]) )
         setattr(cls, "cisgender woman",
                 PermissibleValue(text="cisgender woman",
                                  meaning=GSSO["000385"]) )
@@ -613,7 +661,40 @@ slots.age_in_years = Slot(uri=PERSONINFO.age_in_years, name="age_in_years", curi
                    model_uri=PERSONINFO.age_in_years, domain=None, range=Optional[int])
 
 slots.related_to = Slot(uri=PERSONINFO.related_to, name="related_to", curie=PERSONINFO.curie('related_to'),
-                   model_uri=PERSONINFO.related_to, domain=None, range=Optional[str])
+                   model_uri=PERSONINFO.related_to, domain=None, range=Optional[Union[str, NamedThingId]])
+
+slots.person_to_person_related_to = Slot(uri=PERSONINFO.person_to_person_related_to, name="person_to_person_related_to", curie=PERSONINFO.curie('person_to_person_related_to'),
+                   model_uri=PERSONINFO.person_to_person_related_to, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.ancestor_of = Slot(uri=PERSONINFO.ancestor_of, name="ancestor_of", curie=PERSONINFO.curie('ancestor_of'),
+                   model_uri=PERSONINFO.ancestor_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.parent_of = Slot(uri=PERSONINFO.parent_of, name="parent_of", curie=PERSONINFO.curie('parent_of'),
+                   model_uri=PERSONINFO.parent_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.child_of = Slot(uri=PERSONINFO.child_of, name="child_of", curie=PERSONINFO.curie('child_of'),
+                   model_uri=PERSONINFO.child_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.father_of = Slot(uri=PERSONINFO.father_of, name="father_of", curie=PERSONINFO.curie('father_of'),
+                   model_uri=PERSONINFO.father_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.grandparent_of = Slot(uri=PERSONINFO.grandparent_of, name="grandparent_of", curie=PERSONINFO.curie('grandparent_of'),
+                   model_uri=PERSONINFO.grandparent_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.grandfather_of = Slot(uri=PERSONINFO.grandfather_of, name="grandfather_of", curie=PERSONINFO.curie('grandfather_of'),
+                   model_uri=PERSONINFO.grandfather_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.grandmother_of = Slot(uri=PERSONINFO.grandmother_of, name="grandmother_of", curie=PERSONINFO.curie('grandmother_of'),
+                   model_uri=PERSONINFO.grandmother_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.mother_of = Slot(uri=PERSONINFO.mother_of, name="mother_of", curie=PERSONINFO.curie('mother_of'),
+                   model_uri=PERSONINFO.mother_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.sibling_of = Slot(uri=PERSONINFO.sibling_of, name="sibling_of", curie=PERSONINFO.curie('sibling_of'),
+                   model_uri=PERSONINFO.sibling_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
+
+slots.has_siblings = Slot(uri=PERSONINFO.has_siblings, name="has_siblings", curie=PERSONINFO.curie('has_siblings'),
+                   model_uri=PERSONINFO.has_siblings, domain=None, range=Optional[Union[bool, Bool]])
 
 slots.type = Slot(uri=PERSONINFO.type, name="type", curie=PERSONINFO.curie('type'),
                    model_uri=PERSONINFO.type, domain=None, range=Optional[str])
