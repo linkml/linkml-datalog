@@ -89,9 +89,20 @@ validation_result(
     num > 999.
 ```
 
-LinkML also has various features for boolean logic THESE ARE NOT TRANSLATED YET
+## Motivation / Future Extensions
 
-You can also include your own rules in the header of your schema, e.g the following translates a 'reified' association modeling of relationships to direct slot assignments, and includes transitive inferences etc
+The above example shows functionality that could easily be achieved by other means:
+
+ - jsonschema
+ - shape languages: shex/shacl
+
+In fact the core linkml library already has wrappers for these. See [working with data](https://linkml.io/linkml/data/index.html) in linkml guide.
+
+However, jsonschema in particular offers very limited expressivity. There are many more opportunities for expressivity with linkml.
+
+In particular, LinkML 1.2 introduces autoclassification rules, conditional logic, and complex expressions -- THESE ARE NOT TRANSLATED YET, but they will be in future.
+
+For now, you can also include your own rules in the header of your schema as an annotation, e.g the following translates a 'reified' association modeling of relationships to direct slot assignments, and includes transitive inferences etc
 
 ```prolog
 has_familial_relationship_to(i, p, j) :-
@@ -110,10 +121,12 @@ Person_ancestor_of(i, j) :-
         Person_parent_of(i, j).
 ```
 
+See tests for more details.
+
 In future these will be compilable from higher level predicates
 
 
 ## Background
 
-See https://github.com/linkml/linkml/discussions/196
+See [#196](https://github.com/linkml/linkml/discussions/196)
 
