@@ -15,7 +15,7 @@
     P:1_valid a sdo:Person ;
       sdo:name "name1" ;
       personinfo:age_in_years 25 ;
-      personinfo:age_category "adult"
+      personinfo:age_category HsapDv:0000087
 }
 :t0 a linkml:TestGraph ;
     linkml:max_validation_results 0 ;

@@ -9,7 +9,7 @@ from jinja2 import Template
 from linkml_runtime.linkml_model.meta import SchemaDefinition, ClassDefinition, SlotDefinition, Element, \
     ClassDefinitionName, \
     SlotDefinitionName, \
-    ElementName, TypeDefinitionName, TypeDefinition, Definition, DefinitionName
+    ElementName, TypeDefinitionName, TypeDefinition, Definition, DefinitionName, PermissibleValue
 from linkml.utils.generator import Generator, shared_arguments
 from linkml_runtime.utils.formatutils import camelcase, underscore
 from linkml_runtime.utils.schemaview import SchemaView
@@ -42,6 +42,10 @@ template = macros + """
 .input literal_number
 .decl literal_symbol(s:symbol, o:symbol)
 .input literal_symbol
+
+// closure
+.decl uri_subsumed_by(s:symbol, o:symbol)
+uri_subsumed_by(s,o) :- uri_subsumed_by(s,z), uri_subsumed_by(z,o).
 
 .decl validation_result(type: symbol, subject: symbol, instantiates: symbol, path: symbol, value: symbol, info:symbol)
 .output validation_result
@@ -79,9 +83,12 @@ template = macros + """
     {% endif %}
     {% endif %}
     
+uri_subsumed_by("{{ gen.uri(s) }}", "{{ gen.uri(s) }}").
 {% for p in gen.parents(s) %}
 {{ gen.pred(p) }}(i, v) :- {{ spred }}(i, v).
+uri_subsumed_by("{{ gen.uri(s) }}", "{{ gen.uri(p) }}").
 {% endfor %}
+
 {% if s.inverse %}
 // inverse
 {{ spred }}(i, v) :- {{ gen.pred(s.inverse) }}(v, i). 
@@ -168,6 +175,23 @@ triple(i, p, v) :-
         {{gen.pred(reif.predicate)}}(r, p).
 {% endif %} 
 
+{% if c.defining_slots %}
+// Auto-classification from defining slots: {{c.defining_slots}}
+
+{{ cpred }}(i) :-
+    {{ gen.pred(c.is_a) }}(i)
+    {% for ds in c.defining_slots %}
+    {% set islot = schemaview.induced_slot(ds, c.name) %}
+    {% set spred = gen.pred(islot) %}
+    {% if islot.subproperty_of %}
+    , {{ spred }}(i, v_{{ spred }}), uri_subsumed_by(v_{{ spred }}, "{{ gen.uri(islot.subproperty_of) }}")
+    {% else %}
+    , {{ spred }}(i, v_{{ spred }}), {{ gen.pred(islot.range) }}(v_{{ spred }})
+    {% endif %}
+    {% endfor %}
+    .
+{% endif %}
+
 {% for s in schemaview.class_induced_slots(c.name) %}
 {% set spred = gen.class_slot_pred(c, s) -%}
 {% set dltype = gen.datalog_type(s) %}
@@ -194,12 +218,12 @@ triple(i, p, v) :-
 {% if 'classified_from' in s.annotations %}
 {% set classified_from = s.annotations['classified_from'].value %}
 {% set enum = schemaview.get_enum(s.range) %}
-// CLASSIFYING CATEGORY FROM OTHER SLOT {{enum.permissible_values}} .. {{classified_from}}
+// CLASSIFYING CATEGORY FROM OTHER SLOT {{enum.name}} . {{classified_from}}
 {% for pv in enum.permissible_values.values() %}
 // PV = {{pv.text}}
 {% if 'expr' in pv.annotations %}
 {% set expr = pv.annotations['expr'] %}
-{{ spred }}(i, "{{ pv.text }}" ) :-
+{{ spred }}(i, "{{ gen.uri(pv) }}" ) :-
      {{ classified_from }}(i, v),
      {{expr.value}} .
 {% endif %}
@@ -353,9 +377,12 @@ class DatalogGenerator(Generator):
     def class_slot_pred(self, c: Union[ClassDefinition, ClassDefinitionName], s: Union[SlotDefinition, SlotDefinitionName]) -> str:
         return f'{self.pred(c)}_{self.pred(s)}'
 
-    def uri(self, el: Union[Element, ElementName]) -> str:
+    def uri(self, el: Union[Element, ElementName, PermissibleValue]) -> str:
         sv = self.schemaview
         sv: SchemaView
+        if isinstance(el, PermissibleValue):
+            if el.meaning:
+                return self.meaning_uri(el.meaning)
         if not isinstance(el, Element):
             el = sv.get_element(el)
         if el is None:

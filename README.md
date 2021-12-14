@@ -14,6 +14,8 @@ Until this is released to pypi:
 poetry install
 ```
 
+Docker containers will be provided in future
+
 ## Running
 
 Pass in a schema and a data file
@@ -77,7 +79,7 @@ Person_age_in_years_asserted(i, v) :-
     triple(i, "https://w3id.org/linkml/examples/personinfo/age_in_years", v).
 
 validation_result(
-  "sh:MaxValueTODO",
+  "sh:MaxCountConstraintComponent",
   i,
   "Person",
   "age_in_years",
@@ -102,29 +104,172 @@ However, jsonschema in particular offers very limited expressivity. There are ma
 
 In particular, LinkML 1.2 introduces autoclassification rules, conditional logic, and complex expressions -- THESE ARE NOT TRANSLATED YET, but they will be in future.
 
-For now, you can also include your own rules in the header of your schema as an annotation, e.g the following translates a 'reified' association modeling of relationships to direct slot assignments, and includes transitive inferences etc
+For now there are three ways to get expressive logical rules in:
+
+ 1. Using existing metamodel logical slots
+ 2. Using dedicated *annotations* -- these may become bona fide metamodel slots in the futur
+ 3. including rules in the header of your schema
+
+### Metamodel slots for expressing rules
+
+`is_a` and `mixin` slots are used in inference of categories.
+
+E.g. if `Person is_a NamedThing`, then:
 
 ```prolog
-has_familial_relationship_to(i, p, j) :-
-    Person_has_familial_relationships(i, r),
-    FamilialRelationship_related_to(r, j),
-    FamilialRelationship_type(r, p).
+NamedThing(i) :- Person(i)
+```
 
-Person_parent_of(i, j) :-
-    has_familial_relationship_to(i, "https://example.org/FamilialRelations#02", j).
+This is also used for ranges; e.g if Person has a slot `sibling_of` which has range `Person`, this will generate:
 
-Person_ancestor_of(i, j) :-
-        Person_parent_of(i, z),
-        Person_ancestor_of(z, j).
+```prolog
+validation_result('sh:ClassConstraintComponent', ...) :-
+  Person(i), sibling_of(i,j), ! Person(j).
+```
 
-Person_ancestor_of(i, j) :-
-        Person_parent_of(i, j).
+Slots can be declared as inverses:
+
+```yaml
+sibling_of:
+    is_a: person_to_person_related_to
+    inverse: sibling_of
+```
+
+This will generate
+
+```yaml
+sibling_of(i,j) :- sibling_of(j,i).
+```
+
+Compilation to datalog will also handle associative classes (e.g. reified statements). E.g.
+
+given:
+
+```yaml
+Relationship:
+    class_uri: rdf:Statement
+    slots:
+      - started_at_time
+      - ended_at_time
+      - related_to
+      - type
+    slot_usage:
+      related_to:
+        slot_uri: rdf:object
+      type:
+        slot_uri: rdf:predicate
+
+  FamilialRelationship:
+    is_a: Relationship
+    slot_usage:
+      type:
+        range: FamilialRelationshipType
+        required: true
+      related to:
+        range: Person
+        required: true
+```
+
+this will assert a de-reified triple:
+
+```prolog
+triple(i, p, v) :-
+        triple(i, _container_prop, r),
+        related_to(r, v),
+        type(r, p).
+```
+
+Such that if you have instance data
+
+```yaml
+id: P:002
+    has_familial_relationships:
+      - related_to: P:001
+        type: SIBLING_OF
+```
+
+There will be an inferred 
+
+```prolog
+sibling_of(P:002, P:001)
+```
+
+### Logical annotations
+
+Certain annotations are respected:
+
+ - transitive
+ - reflexive
+
+Also:
+
+```yaml
+  ancestor_of:
+    is_a: person_to_person_related_to
+    annotations:
+      transitive_closure_of: parent_of
+```
+
+these may be added as bona-fide metamodel slots in the future
+
+A special annotation is `classified_from`, this can be used to auto-classify using an enum based on another slot
+
+```yaml
+slots:
+  age_category:
+    range: AgeCategory
+    annotations:
+      classified_from: age_in_years
+
+enums:
+  AgeCategory:
+    permissible_values:
+      adult:
+        meaning: HsapDv:0000087
+        annotations:
+          expr: v >= 19
+      infant:
+        meaning: HsapDv:0000083
+        annotations:
+          expr: v >= 0, v <= 2
+      adolescent:
+        meaning: HsapDv:0000086
+        annotations:
+          expr: v >= 13, v <= 18
+```
+
+
+
+### Schema level rules
+
+For now, you can also include your own rules in the header of your schema as an annotation
+
+E.g. see tests/inputs/personinfo.yaml, which has this as a schema-level annotation:
+
+```prolog
+
+    grandparent_of(i, j) :-
+        parent_of(i, z),
+        parent_of(z, j).
+
+    grandfather_of(i, j) :-
+        grandparent_of(i, j),
+        is_man(i).
+
+    grandmother_of(i, j) :-
+        grandparent_of(i, j),
+        is_woman(i).
+
+    // GSSO-compliant definitions
+    .decl is_man(i: identifier)
+    .decl is_woman(i: identifier)
+    is_man(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000372").
+    is_man(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000371").
+    is_woman(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000384").
+    is_woman(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000385").
 ```
 
 See tests for more details.
-
-In future these will be compilable from higher level predicates
-
 
 ## Background
 

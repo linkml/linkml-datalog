@@ -8,17 +8,19 @@ OUTPUTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'outputs'
 
 class DatalogGeneratorTestCase(unittest.TestCase):
     def test_gen(self):
-        fn = os.path.join(INPUTS_DIR, "personinfo.yaml")
+        """
+        Export Biolink Model to Datalog Schema (RDF-Based)
+        :return:
+        """
+        fn = os.path.join(INPUTS_DIR,"biolink-model.yaml")
         print(f'Loading {fn}')
         gen = DatalogGenerator(fn)
         print(gen.serialize())
-
-    def test_biolink(self):
-        fn = os.path.join(INPUTS_DIR, "biolink-model.yaml")
-        print(f'Loading {fn}')
-        gen = DatalogGenerator(fn)
-        with open(os.path.join(OUTPUTS_DIR, 'biolink.dl'), 'w') as stream:
+        self.assertEqual(True, True)
+        with open(os.path.join(OUTPUTS_DIR,"biolink.dl"), 'w') as stream:
             stream.write(gen.serialize())
+
+
 
 
 if __name__ == '__main__':

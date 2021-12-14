@@ -64,8 +64,8 @@ class DatalogEngineTestCase(unittest.TestCase):
                                      ])
         self._check_tuples(e, Person, personinfo.slots.age_category,
                            min_expected=3,
-                           contains=[('https://example.org/P/001', 'adult'),
-                                     ('https://example.org/P/006', 'adolescent'),
+                           contains=[('https://example.org/P/001', 'http://purl.obolibrary.org/obo/HsapDv_0000087'),
+                                     ('https://example.org/P/006', 'http://purl.obolibrary.org/obo/HsapDv_0000086'),
                                      ])
         #e.materialize_inferences(data)
         #ys = yaml_dumper.dumps(data)
