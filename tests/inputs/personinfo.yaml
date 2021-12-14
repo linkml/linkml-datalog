@@ -14,6 +14,7 @@ prefixes:
   rdfs: http://www.w3.org/2000/01/rdf-schema#
   prov: http://www.w3.org/ns/prov#
   GSSO: http://purl.obolibrary.org/obo/GSSO_
+  HsapDv: http://purl.obolibrary.org/obo/HsapDv_
   famrel: https://example.org/FamilialRelations#
   P: https://example.org/P/
   CODE: https://example.org/CODE/
@@ -29,48 +30,26 @@ emit_prefixes:
 
 annotations:
   datalog: |-
-    .decl has_familial_relationship_to(i: identifier, p: identifier, j: identifier)
-    .output has_familial_relationship_to
-    has_familial_relationship_to(i, p, j) :-
-        Person_has_familial_relationships(i, r),
-        FamilialRelationship_related_to(r, j),
-        FamilialRelationship_type(r, p).
 
-    Person_sibling_of(i, j) :-
-        has_familial_relationship_to(i, "https://example.org/FamilialRelations#01", j).
+    grandparent_of(i, j) :-
+        parent_of(i, z),
+        parent_of(z, j).
 
-    Person_parent_of(i, j) :-
-        has_familial_relationship_to(i, "https://example.org/FamilialRelations#02", j).
-
-    Person_child_of(i, j) :-
-        has_familial_relationship_to(i, "https://example.org/FamilialRelations#03", j).
-
-    Person_ancestor_of(i, j) :-
-            Person_parent_of(i, z),
-            Person_ancestor_of(z, j).
-
-    Person_ancestor_of(i, j) :-
-            Person_parent_of(i, j).
-
-    Person_grandparent_of(i, j) :-
-        Person_parent_of(i, z),
-        Person_parent_of(z, j).
-
-    Person_grandfather_of(i, j) :-
-        Person_grandparent_of(i, j),
+    grandfather_of(i, j) :-
+        grandparent_of(i, j),
         is_man(i).
 
-    Person_grandmother_of(i, j) :-
-        Person_grandparent_of(i, j),
+    grandmother_of(i, j) :-
+        grandparent_of(i, j),
         is_woman(i).
 
     // GSSO-compliant definitions
     .decl is_man(i: identifier)
     .decl is_woman(i: identifier)
-    is_man(i) :- Person_gender(i, "http://purl.obolibrary.org/obo/GSSO_000372").
-    is_man(i) :- Person_gender(i, "http://purl.obolibrary.org/obo/GSSO_000371").
-    is_woman(i) :- Person_gender(i, "http://purl.obolibrary.org/obo/GSSO_000384").
-    is_woman(i) :- Person_gender(i, "http://purl.obolibrary.org/obo/GSSO_000385").
+    is_man(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000372").
+    is_man(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000371").
+    is_woman(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000384").
+    is_woman(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000385").
 
 
 classes:
@@ -112,6 +91,7 @@ classes:
       - ancestor_of
       - mother_of
       - has_siblings
+      - age_category
     slot_usage:
       primary_email:
         pattern: "^\\S+@[\\S+\\.]+\\S+"
@@ -188,11 +168,17 @@ classes:
       
 
   Relationship:
+    class_uri: rdf:Statement
     slots:
       - started_at_time
       - ended_at_time
       - related_to
       - type
+    slot_usage:
+      related_to:
+        slot_uri: rdf:object
+      type:
+        slot_uri: rdf:predicate
 
   FamilialRelationship:
     is_a: Relationship
@@ -234,6 +220,7 @@ slots:
     slot_uri: schema:identifier
   name:
     slot_uri: schema:name
+    required: true
   description:
     slot_uri: schema:description
   image:
@@ -271,6 +258,10 @@ slots:
     range: integer
     minimum_value: 0
     maximum_value: 999
+  age_category:
+    range: AgeCategory
+    annotations:
+      classified_from: age_in_years
   related_to:
     range: NamedThing
   person_to_person_related_to:
@@ -281,8 +272,10 @@ slots:
     annotations:
       transitive_closure_of: parent_of
   parent_of:
-    is_a: ancestor_of
+    is_a: person_to_person_related_to
+    #is_a: ancestor_of
     inverse: child_of
+    slot_uri: famrel:02
   child_of:
     is_a: person_to_person_related_to
   father_of:
@@ -298,6 +291,7 @@ slots:
   sibling_of:
     is_a: person_to_person_related_to
     inverse: sibling_of
+    slot_uri: famrel:01
   has_siblings:
     range: boolean
   type:
@@ -360,6 +354,21 @@ enums:
       cisgender woman:
         meaning: GSSO:000385
   DiagnosisType:
+
+  AgeCategory:
+    permissible_values:
+      adult:
+        meaning: HsapDv:0000087
+        annotations:
+          expr: v >= 19
+      infant:
+        meaning: HsapDv:0000083
+        annotations:
+          expr: v >= 0, v <= 2
+      adolescent:
+        meaning: HsapDv:0000086
+        annotations:
+          expr: v >= 13, v <= 18
 
 subsets:
   basic_subset:

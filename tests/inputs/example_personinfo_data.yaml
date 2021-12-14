@@ -43,6 +43,9 @@ persons:
       - related_to: P:004
         type: PARENT_OF
     gender: cisgender man
+  - id: P:006
+    name: teenage schmoe
+    age_in_years: 15
 
 
 #    current_address:

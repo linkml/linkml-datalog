@@ -1,8 +1,9 @@
 import unittest
 from pathlib import Path
-from typing import Type
+from typing import Type, Tuple, List
 
 import yaml
+from linkml_runtime.dumpers import rdflib_dumper, yaml_dumper
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schemaview import SchemaView
 
@@ -10,6 +11,7 @@ import os
 
 from linkml_runtime.utils.slot import Slot
 from linkml_runtime.utils.yamlutils import YAMLRoot
+from rdflib import Graph, ConjunctiveGraph, RDF, Namespace, URIRef, RDFS
 
 from linkml_datalog.dumpers.tupledumper import TupleDumper
 from linkml_datalog.engines.datalog_engine import DatalogEngine
@@ -37,20 +39,80 @@ class DatalogEngineTestCase(unittest.TestCase):
         data = yaml_loader.load(data_fn, target_class=Container)
         directory = os.path.join(OUTPUT_DIR, 'persondata')
         Path(directory).mkdir(exist_ok=True)
-        with open(data_fn) as stream:
-            obj = yaml.safe_load(stream)
         sv = SchemaView(schema_fn)
-        tuple_dumper = TupleDumper()
-        #tuple_dumper.dump(data, schemaview=sv, prefix_map=prefixes, directory=directory)
         e = DatalogEngine(sv, workdir=os.path.join(OUTPUT_DIR, 'tmp'))
         e.run(data, prefix_map=prefixes)
         rpt = e.validation_results()
-        #print(rpt)
         for result in rpt.results:
             print(f' * {result}')
-        self._check_tuples(e, Person, personinfo.slots.grandfather_of, expected=1)
+        def has_type(t):
+            matches = [result for result in rpt.results if result.type == t]
+            return matches != []
+        assert len(rpt.results) > 0
+        assert has_type('sh:MaxInclusiveConstraintComponent')
 
-    def _check_tuples(self, e: DatalogEngine, cls: Type[YAMLRoot], slot: Slot, min_expected=1, max_expected=100, expected=None):
+        self._check_tuples(e, Person, personinfo.slots.grandfather_of, expected=1)
+        self._check_tuples(e, Person, personinfo.slots.sibling_of,
+                           min_expected=3,
+                           contains=[('https://example.org/P/002', 'https://example.org/P/001'),
+                                     ('https://example.org/P/003', 'https://example.org/P/003'),
+                                     ])
+        self._check_tuples(e, Person, personinfo.slots.ancestor_of,
+                           min_expected=3,
+                           contains=[('https://example.org/P/005', 'https://example.org/P/004'),
+                                     ('https://example.org/P/005', 'https://example.org/P/001'),
+                                     ])
+        self._check_tuples(e, Person, personinfo.slots.age_category,
+                           min_expected=3,
+                           contains=[('https://example.org/P/001', 'adult'),
+                                     ('https://example.org/P/006', 'adolescent'),
+                                     ])
+        #e.materialize_inferences(data)
+        #ys = yaml_dumper.dumps(data)
+        #print(ys)
+
+    def test_engine_rdf(self):
+        """uses a collection of annotated named graphs as test  """
+        schema_fn = os.path.join(INPUTS_DIR, "personinfo.yaml")
+        sv = SchemaView(schema_fn)
+
+        LINKML = Namespace('https://w3id.org/linkml/')
+        g = ConjunctiveGraph()
+        g.parse(os.path.join(INPUTS_DIR, "instance_tests.trig"), format='trig')
+        for subg in g.contexts():
+            subg_id = subg.identifier
+            print(f'EVALUATING: {URIRef(subg.identifier)} -- {subg}')
+            typs = list(g.objects(subject=subg_id, predicate=RDF.type))
+            if LINKML.TestGraph not in typs:
+                print(f' SKIPPING: {subg}')
+                continue
+            for cmt in g.objects(subject=subg_id, predicate=RDFS.comment):
+                print(f'## {cmt}')
+            directory = os.path.join(OUTPUT_DIR, 'persondata')
+            Path(directory).mkdir(exist_ok=True)
+            e = DatalogEngine(sv, workdir=os.path.join(OUTPUT_DIR, 'tmp'))
+            e.run(subg, prefix_map=prefixes)
+            rpt = e.validation_results()
+            print(f' RESUlTS: {subg} = {len(rpt.results)}')
+            for result in rpt.results:
+                print(f' * {result}')
+            def has_type(t):
+                matches = [result for result in rpt.results if result.type == t]
+                print(f'MATCHES({t}) = {matches}')
+                return matches != []
+            expected_fails = list(g.objects(subject=subg_id, predicate=LINKML.fail))
+            for e in expected_fails:
+                e_curie = e.n3(g.namespace_manager)
+                assert has_type(e_curie)
+            for v in g.objects(subject=subg_id, predicate=LINKML.max_validation_results):
+                max_results = v.value
+                print(f' MAX RESULTS EXPECTED; testing if {len(rpt.results)} <= {max_results} // {type(v)}')
+                self.assertLessEqual(len(rpt.results), max_results)
+            print('PASSES')
+
+
+    def _check_tuples(self, e: DatalogEngine, cls: Type[YAMLRoot], slot: Slot, min_expected=1, max_expected=100,
+                      expected=None, contains: List[Tuple[str, str]] = None):
         tups = e.inferred_slot_values(cls.class_name, slot.name)
         for t in tups:
             print(f'  T({cls} {slot}) = {t}')
@@ -58,9 +120,12 @@ class DatalogEngineTestCase(unittest.TestCase):
             min_expected = expected
             max_expected = expected
         if min_expected is not None:
-            self.assertLessEqual(len(tups), min_expected)
+            self.assertGreaterEqual(len(tups), min_expected)
         if max_expected is not None:
-            self.assertGreaterEqual(len(tups), max_expected)
+            self.assertLessEqual(len(tups), max_expected)
+        if contains:
+            for c in contains:
+                self.assertIn(c, tups)
 
 
 if __name__ == '__main__':

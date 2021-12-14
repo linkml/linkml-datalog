@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import subprocess
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union, Tuple
 
@@ -12,6 +13,7 @@ from linkml.generators.pythongen import PythonGenerator
 from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.linkml_model import SlotDefinitionName
 from linkml_runtime.utils.compile_python import compile_python
+from linkml_runtime.utils.formatutils import underscore
 from linkml_runtime.utils.schemaview import SchemaView, ClassDefinitionName
 from linkml_runtime.utils.yamlutils import YAMLRoot
 from rdflib import Graph
@@ -42,7 +44,7 @@ class DatalogEngine:
     sv: SchemaView = None
     workdir: str = None
 
-    def run(self, obj: Union[YAMLRoot, Graph], prefix_map: Dict[str, str] = None):
+    def run(self, obj: Union[YAMLRoot, Graph], prefix_map: Dict[str, str] = None, strict=True):
         """
         Run datalog inference over a data object
         """
@@ -54,7 +56,17 @@ class DatalogEngine:
         generator.serialize()
         dumper = TupleDumper()
         dumper.dump(obj, sv, directory=workdir, prefix_map=prefix_map)
-        runcmd(f'souffle -F{workdir} -D{workdir} {workdir}/schema.dl')
+        result = subprocess.run(['souffle', f'-F{workdir}', f'-D{workdir}', f'{workdir}/schema.dl'],
+                                capture_output=True)
+        print(f'STDERR: {result.stderr}')
+        if result.stderr:
+            logging.error(f'STDERR: {result.stderr}')
+        if result.stdout:
+            logging.error(f'STDOUT: {result.stdout}')
+        result.check_returncode()
+        if strict and result.stderr:
+            raise Exception(f'Got warnings: {result.stderr}')
+        #runcmd(f'souffle -F{workdir} -D{workdir} {workdir}/schema.dl')
 
     def _parse_results(self, pred: str) -> List[List[str]]:
         with open(os.path.join(self.workdir, f'{pred}.csv')) as csvfile:
@@ -78,7 +90,43 @@ class DatalogEngine:
         return ValidationReport(results=results)
 
     def inferred_slot_values(self, cn: ClassDefinitionName, sn: SlotDefinitionName) -> List[Tuple[str, str]]:
-        return [tuple(r) for r in self._parse_results(f'{cn}_{sn}')]
+        return [(r[0], r[1]) for r in self._parse_results(f'{cn}_{sn}')]
+
+    def materialize_inferences(self, obj: YAMLRoot) -> None:
+        # TODO: potentially redo, get all inferred triples first
+        print(f'MAT {obj} {type(obj)}')
+        if obj is None:
+            return
+        if isinstance(obj, list):
+            for x in obj:
+                self.materialize_inferences(x)
+            return
+        if isinstance(obj, dict):
+            for x in obj.values():
+                self.materialize_inferences(x)
+            return
+        sv = self.sv
+        t = type(obj)
+        try:
+            cn = t.class_name
+        except:
+            return
+        id_slot = sv.get_identifier_slot(cn)
+        if id_slot:
+            id_val = getattr(obj, id_slot.name)
+        else:
+            id_val = None
+        for islot in sv.class_induced_slots(cn):
+            sn = underscore(islot.name)
+            if id_val:
+                # TODO: optimize
+                for row in self._parse_results(sn):
+                    # TODO: CURIE expansion
+                    if row[0] == id_val:
+                        setattr(obj, sn, row[1])
+            if islot.range in sv.all_classes():
+                self.materialize_inferences(getattr(obj, sn))
+
 
 
 

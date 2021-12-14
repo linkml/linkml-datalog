@@ -1,0 +1,89 @@
+@prefix sh: <https://w3id.org/shacl/> .
+@prefix linkml: <https://w3id.org/linkml/> .
+@prefix personinfo: <https://w3id.org/linkml/examples/personinfo/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>  .
+@prefix sdo: <http://schema.org/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix : <http://example.org/tests/> .
+@prefix CODE: <http://example.org/CODE/> .
+@prefix P: <http://example.org/P/> .
+@prefix ROR: <http://example.org/ROR/> .
+@prefix HsapDv: <http://purl.obolibrary.org/obo/HsapDv_> .
+
+:t0 {
+    P:1_valid a sdo:Person ;
+      sdo:name "name1" ;
+      personinfo:age_in_years 25 ;
+      personinfo:age_category "adult"
+}
+:t0 a linkml:TestGraph ;
+    linkml:max_validation_results 0 ;
+    rdfs:comment "no problems" .
+
+:t1x {
+    P:1 a sdo:Person ;
+        personinfo:age_category HsapDv:0000087xxxxx
+}
+:t1x a linkml:TestGraph ;
+    rdfs:comment "made up category" ;
+    linkml:fail sh:ClassConstraintComponent .
+
+
+:t1 {
+    P:1 a sdo:Person .
+}
+:t1 a linkml:TestGraph ;
+    rdfs:comment "missing a required field" ;
+    linkml:fail sh:MinCountConstraintComponent .
+
+:t2 {
+    P:1 a sdo:Person ;
+      sdo:name "name1" ;
+      sdo:name "name2"
+}
+:t2 a linkml:TestGraph ;
+    rdfs:comment "multiple values provided for a non-multivalued field" ;
+    linkml:fail sh:MaxCountConstraintComponent .
+
+:t3 {
+    P:1 a sdo:Person ;
+      sdo:name "name1" ;
+      personinfo:age_in_years 99999
+}
+:t3 a linkml:TestGraph ;
+    rdfs:comment "number exceeds maximum value" ;
+    linkml:fail sh:MaxInclusiveConstraintComponent .
+
+
+:t4 {
+    ROR:1 a sdo:Organization ;
+      sdo:gender <http://purl.obolibrary.org/obo/GSSO_000371> .
+}
+:t4 a linkml:TestGraph ;
+    rdfs:comment "inapplicable slot" ;
+    linkml:fail sh:ClosedConstraintComponent .
+
+:t5 {
+    P:1 a sdo:Person ;
+      sdo:name "name1" ;
+      personinfo:child_of ROR:1 .
+    ROR:1 a sdo:Organization
+}
+:t5 a linkml:TestGraph ;
+    rdfs:comment "unexpected range" ;
+    linkml:fail sh:ClassConstraintComponent .
+
+:t6 {
+    P:1 a sdo:Person ;
+      sdo:name "name1" ;
+      personinfo:age_in_years 15 ;
+      personinfo:age_category HsapDv:0000087
+       
+}
+:t6 a linkml:TestGraph ;
+    rdfs:comment "inferred category does not match asserted" ;
+    linkml:fail sh:MaxCountConstraintComponent .
+
+
+

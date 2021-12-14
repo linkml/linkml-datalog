@@ -1,5 +1,5 @@
 # Auto generated from personinfo.yaml by pythongen.py version: 0.9.0
-# Generation date: 2021-12-10T17:42:58
+# Generation date: 2021-12-13T18:36:13
 # Schema: personinfo
 #
 # id: https://w3id.org/linkml/examples/personinfo
@@ -31,7 +31,12 @@ metamodel_version = "1.7.0"
 dataclasses._init_fn = dataclasses_init_fn_with_kwargs
 
 # Namespaces
+CODE = CurieNamespace('CODE', 'https://example.org/CODE/')
+GEO = CurieNamespace('GEO', 'https://example.org/GEO/')
 GSSO = CurieNamespace('GSSO', 'http://purl.obolibrary.org/obo/GSSO_')
+HSAPDV = CurieNamespace('HsapDv', 'http://purl.obolibrary.org/obo/HsapDv_')
+P = CurieNamespace('P', 'https://example.org/P/')
+ROR = CurieNamespace('ROR', 'https://example.org/ROR/')
 FAMREL = CurieNamespace('famrel', 'https://example.org/FamilialRelations#')
 LINKML = CurieNamespace('linkml', 'https://w3id.org/linkml/')
 PERSONINFO = CurieNamespace('personinfo', 'https://w3id.org/linkml/examples/personinfo/')
@@ -87,7 +92,7 @@ class NamedThing(YAMLRoot):
     class_model_uri: ClassVar[URIRef] = PERSONINFO.NamedThing
 
     id: Union[str, NamedThingId] = None
-    name: Optional[str] = None
+    name: str = None
     description: Optional[str] = None
     image: Optional[str] = None
 
@@ -97,7 +102,9 @@ class NamedThing(YAMLRoot):
         if not isinstance(self.id, NamedThingId):
             self.id = NamedThingId(self.id)
 
-        if self.name is not None and not isinstance(self.name, str):
+        if self._is_empty(self.name):
+            self.MissingRequiredField("name")
+        if not isinstance(self.name, str):
             self.name = str(self.name)
 
         if self.description is not None and not isinstance(self.description, str):
@@ -122,6 +129,7 @@ class Person(NamedThing):
     class_model_uri: ClassVar[URIRef] = PERSONINFO.Person
 
     id: Union[str, PersonId] = None
+    name: str = None
     primary_email: Optional[str] = None
     birth_date: Optional[str] = None
     age_in_years: Optional[int] = None
@@ -140,6 +148,7 @@ class Person(NamedThing):
     ancestor_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
     mother_of: Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]] = empty_list()
     has_siblings: Optional[Union[bool, Bool]] = None
+    age_category: Optional[Union[str, "AgeCategory"]] = None
     aliases: Optional[Union[str, List[str]]] = empty_list()
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
@@ -212,6 +221,9 @@ class Person(NamedThing):
         if self.has_siblings is not None and not isinstance(self.has_siblings, Bool):
             self.has_siblings = Bool(self.has_siblings)
 
+        if self.age_category is not None and not isinstance(self.age_category, AgeCategory):
+            self.age_category = AgeCategory(self.age_category)
+
         if not isinstance(self.aliases, list):
             self.aliases = [self.aliases] if self.aliases is not None else []
         self.aliases = [v if isinstance(v, str) else str(v) for v in self.aliases]
@@ -254,6 +266,7 @@ class Organization(NamedThing):
     class_model_uri: ClassVar[URIRef] = PERSONINFO.Organization
 
     id: Union[str, OrganizationId] = None
+    name: str = None
     mission_statement: Optional[str] = None
     founding_date: Optional[str] = None
     founding_location: Optional[Union[str, PlaceId]] = None
@@ -291,7 +304,7 @@ class Place(YAMLRoot):
     class_model_uri: ClassVar[URIRef] = PERSONINFO.Place
 
     id: Union[str, PlaceId] = None
-    name: Optional[str] = None
+    name: str = None
     aliases: Optional[Union[str, List[str]]] = empty_list()
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
@@ -300,7 +313,9 @@ class Place(YAMLRoot):
         if not isinstance(self.id, PlaceId):
             self.id = PlaceId(self.id)
 
-        if self.name is not None and not isinstance(self.name, str):
+        if self._is_empty(self.name):
+            self.MissingRequiredField("name")
+        if not isinstance(self.name, str):
             self.name = str(self.name)
 
         if not isinstance(self.aliases, list):
@@ -376,6 +391,7 @@ class Concept(NamedThing):
     class_model_uri: ClassVar[URIRef] = PERSONINFO.Concept
 
     id: Union[str, ConceptId] = None
+    name: str = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.id):
@@ -396,6 +412,7 @@ class DiagnosisConcept(Concept):
     class_model_uri: ClassVar[URIRef] = PERSONINFO.DiagnosisConcept
 
     id: Union[str, DiagnosisConceptId] = None
+    name: str = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.id):
@@ -416,6 +433,7 @@ class ProcedureConcept(Concept):
     class_model_uri: ClassVar[URIRef] = PERSONINFO.ProcedureConcept
 
     id: Union[str, ProcedureConceptId] = None
+    name: str = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
         if self._is_empty(self.id):
@@ -430,8 +448,8 @@ class ProcedureConcept(Concept):
 class Relationship(YAMLRoot):
     _inherited_slots: ClassVar[List[str]] = []
 
-    class_class_uri: ClassVar[URIRef] = PERSONINFO.Relationship
-    class_class_curie: ClassVar[str] = "personinfo:Relationship"
+    class_class_uri: ClassVar[URIRef] = RDF.Statement
+    class_class_curie: ClassVar[str] = "rdf:Statement"
     class_name: ClassVar[str] = "Relationship"
     class_model_uri: ClassVar[URIRef] = PERSONINFO.Relationship
 
@@ -611,6 +629,19 @@ class DiagnosisType(EnumDefinitionImpl):
         name="DiagnosisType",
     )
 
+class AgeCategory(EnumDefinitionImpl):
+
+    adult = PermissibleValue(text="adult",
+                                 meaning=HSAPDV["0000087"])
+    infant = PermissibleValue(text="infant",
+                                   meaning=HSAPDV["0000083"])
+    adolescent = PermissibleValue(text="adolescent",
+                                           meaning=HSAPDV["0000086"])
+
+    _defn = EnumDefinition(
+        name="AgeCategory",
+    )
+
 # Slots
 class slots:
     pass
@@ -619,7 +650,7 @@ slots.id = Slot(uri=SCHEMA.identifier, name="id", curie=SCHEMA.curie('identifier
                    model_uri=PERSONINFO.id, domain=None, range=URIRef)
 
 slots.name = Slot(uri=SCHEMA.name, name="name", curie=SCHEMA.curie('name'),
-                   model_uri=PERSONINFO.name, domain=None, range=Optional[str])
+                   model_uri=PERSONINFO.name, domain=None, range=str)
 
 slots.description = Slot(uri=SCHEMA.description, name="description", curie=SCHEMA.curie('description'),
                    model_uri=PERSONINFO.description, domain=None, range=Optional[str])
@@ -660,6 +691,9 @@ slots.current_address = Slot(uri=PERSONINFO.current_address, name="current_addre
 slots.age_in_years = Slot(uri=PERSONINFO.age_in_years, name="age_in_years", curie=PERSONINFO.curie('age_in_years'),
                    model_uri=PERSONINFO.age_in_years, domain=None, range=Optional[int])
 
+slots.age_category = Slot(uri=PERSONINFO.age_category, name="age_category", curie=PERSONINFO.curie('age_category'),
+                   model_uri=PERSONINFO.age_category, domain=None, range=Optional[Union[str, "AgeCategory"]])
+
 slots.related_to = Slot(uri=PERSONINFO.related_to, name="related_to", curie=PERSONINFO.curie('related_to'),
                    model_uri=PERSONINFO.related_to, domain=None, range=Optional[Union[str, NamedThingId]])
 
@@ -669,7 +703,7 @@ slots.person_to_person_related_to = Slot(uri=PERSONINFO.person_to_person_related
 slots.ancestor_of = Slot(uri=PERSONINFO.ancestor_of, name="ancestor_of", curie=PERSONINFO.curie('ancestor_of'),
                    model_uri=PERSONINFO.ancestor_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
 
-slots.parent_of = Slot(uri=PERSONINFO.parent_of, name="parent_of", curie=PERSONINFO.curie('parent_of'),
+slots.parent_of = Slot(uri=FAMREL['02'], name="parent_of", curie=FAMREL.curie('02'),
                    model_uri=PERSONINFO.parent_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
 
 slots.child_of = Slot(uri=PERSONINFO.child_of, name="child_of", curie=PERSONINFO.curie('child_of'),
@@ -690,7 +724,7 @@ slots.grandmother_of = Slot(uri=PERSONINFO.grandmother_of, name="grandmother_of"
 slots.mother_of = Slot(uri=PERSONINFO.mother_of, name="mother_of", curie=PERSONINFO.curie('mother_of'),
                    model_uri=PERSONINFO.mother_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
 
-slots.sibling_of = Slot(uri=PERSONINFO.sibling_of, name="sibling_of", curie=PERSONINFO.curie('sibling_of'),
+slots.sibling_of = Slot(uri=FAMREL['01'], name="sibling_of", curie=FAMREL.curie('01'),
                    model_uri=PERSONINFO.sibling_of, domain=None, range=Optional[Union[Union[str, PersonId], List[Union[str, PersonId]]]])
 
 slots.has_siblings = Slot(uri=PERSONINFO.has_siblings, name="has_siblings", curie=PERSONINFO.curie('has_siblings'),
@@ -747,6 +781,12 @@ slots.related_to = Slot(uri=PERSONINFO.related_to, name="related to", curie=PERS
 slots.Person_primary_email = Slot(uri=SCHEMA.email, name="Person_primary_email", curie=SCHEMA.curie('email'),
                    model_uri=PERSONINFO.Person_primary_email, domain=Person, range=Optional[str],
                    pattern=re.compile(r'^\S+@[\S+\.]+\S+'))
+
+slots.Relationship_related_to = Slot(uri=RDF.object, name="Relationship_related_to", curie=RDF.curie('object'),
+                   model_uri=PERSONINFO.Relationship_related_to, domain=Relationship, range=Optional[Union[str, NamedThingId]])
+
+slots.Relationship_type = Slot(uri=RDF.predicate, name="Relationship_type", curie=RDF.curie('predicate'),
+                   model_uri=PERSONINFO.Relationship_type, domain=Relationship, range=Optional[str])
 
 slots.FamilialRelationship_type = Slot(uri=PERSONINFO.type, name="FamilialRelationship_type", curie=PERSONINFO.curie('type'),
                    model_uri=PERSONINFO.FamilialRelationship_type, domain=FamilialRelationship, range=Union[str, "FamilialRelationshipType"])

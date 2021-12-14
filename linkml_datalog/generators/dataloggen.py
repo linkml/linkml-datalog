@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from typing import Union, TextIO, Optional, Set, List, Any, Callable, Dict, Tuple
 import logging
 
@@ -8,13 +9,22 @@ from jinja2 import Template
 from linkml_runtime.linkml_model.meta import SchemaDefinition, ClassDefinition, SlotDefinition, Element, \
     ClassDefinitionName, \
     SlotDefinitionName, \
-    ElementName
+    ElementName, TypeDefinitionName, TypeDefinition, Definition, DefinitionName
 from linkml.utils.generator import Generator, shared_arguments
 from linkml_runtime.utils.formatutils import camelcase, underscore
 from linkml_runtime.utils.schemaview import SchemaView
 
 
-template = """
+macros = """
+{% macro slot(s, c=None) -%}
+// MACRO SLOT: {{s.name}} {{c}}
+
+{%- endmacro %}
+"""
+
+template = macros + """
+
+
 /**
  Schema: {{schema.name}}
 */
@@ -45,6 +55,88 @@ template = """
 {% endif %}
 
 // -------------
+// -- Slots --
+// -------------
+{% for s in schemaview.all_slots().values() %}
+{% set dltype = gen.datalog_type(s) %}
+// Slot: {{s.name}} TYPE: {{ dltype }}
+{{slot(s)}}
+{% set spred = gen.pred(s) -%}
+.decl {{ spred }}_asserted(i: identifier, v: {{ dltype }})
+.decl {{ spred }}(i: identifier, v: {{ dltype }})
+.output {{ spred }}
+{{ spred }}(i, v) :- 
+    {{ spred }}_asserted(i, v).
+{{ spred }}_asserted(i, v) :- 
+    {% if dltype == 'identifier' %}
+    triple(i, "{{ gen.uri(s) }}", v).
+    {% else %}
+    triple(i, "{{ gen.uri(s) }}", x),
+    {% if dltype == 'number' %}
+    literal_number(x, v).
+    {% else %}
+     literal_symbol(x, v).
+    {% endif %}
+    {% endif %}
+    
+{% for p in gen.parents(s) %}
+{{ gen.pred(p) }}(i, v) :- {{ spred }}(i, v).
+{% endfor %}
+{% if s.inverse %}
+// inverse
+{{ spred }}(i, v) :- {{ gen.pred(s.inverse) }}(v, i). 
+{% endif %}
+
+{% if s.symmetric %}
+// symmetric
+{{ spred }}(i, v) :- {{ spred }}(v, i). 
+{% endif %}
+
+{% if gen.is_transitive(s) %}
+// transitive
+{{ spred }}(i, v) :- 
+    {{ spred }}(i, z),
+    {{ spred }}(z, v).
+{% endif %}
+
+{% if 'transitive_closure_of' in s.annotations %}
+// transitive
+{{ spred }}(i, v) :- 
+    {{ gen.pred(s.annotations['transitive_closure_of'].value) }}(i, v).
+{% endif %}
+
+// DOMAIN AND RANGE
+
+validation_result(
+  "sh:ClosedConstraintComponent",
+  i,
+  "{{s.name}}",
+  "{{s.name}}",
+  //to_string(v),
+  "",
+  "Expected domain is {{gen.domains(s)}}") :-
+    {{spred}}(i, _v)
+    {%- for domain in gen.domains(s) -%}
+    , ! {{ gen.pred(domain) }}(i)
+    {%- endfor %} .
+    
+{% if s.range and not s.range in schemaview.all_types() %}
+validation_result(
+  "sh:Range",
+  i,
+  "{{s.name}}",
+  "{{s.name}}",
+  //as(v, value),
+  "",
+  "Expected range is {{s.range}}") :-
+    {{spred}}(i, v),
+    ! {{ gen.pred(s.range) }}(v).
+{% endif %}
+    
+{% endfor %}
+// end of slots block
+
+// -------------
 // -- CLASSES --
 // -------------
 {% for c in schemaview.all_classes().values() %}
@@ -62,25 +154,56 @@ template = """
 {{ gen.pred(p) }}(i) :- {{ cpred }}(i).
 {% endfor %}
 
+
+{% if gen.reification_of(c.name) %}
+{% set reif = gen.reification_of(c.name) %}
+// DE-REIFICATION RULE:
+triple(i, p, v) :-
+        {% if reif.subject %}
+        {{gen.pred(reif.subject)}}(r, i)
+        {% else %}
+        triple(i, _container_prop, r),
+        {% endif %}
+        {{gen.pred(reif.object)}}(r, v),
+        {{gen.pred(reif.predicate)}}(r, p).
+{% endif %} 
+
 {% for s in schemaview.class_induced_slots(c.name) %}
 {% set spred = gen.class_slot_pred(c, s) -%}
-.decl {{ spred }}_asserted(i: identifier, v: value)
-.decl {{ spred }}(i: identifier, v: value)
+{% set dltype = gen.datalog_type(s) %}
+// CLASS_SLOT {{s.name}} TYPE: {{ dltype }}
+.decl {{ spred }}_asserted(i: identifier, v: {{ dltype }})
+.decl {{ spred }}(i: identifier, v: {{ dltype }})
 .output {{ spred }}
 .output {{ spred }}_asserted
 {{ spred }}(i, v) :- 
     {{ spred }}_asserted(i, v).
 {{ spred }}_asserted(i, v) :- 
     {{ cpred }}(i),
-    triple(i, "{{ gen.uri(s) }}", v).
+    {{ gen.pred(s) }}(i, v).
 // TODO: inferring default values
 
-{% if s.inverse %}
+{% if s.inverse and False %}
 {% set inv = s.inverse %}
 {% set inv_range = gen.get_slot_range(inv) %}
 // Inverse of: {{inv}} range: {{inv_range}}
 {% set spred_inv = gen.class_slot_pred(inv_range, inv) %}
 {{ spred }}(i, v) :- {{ spred_inv }}(v, i). 
+{% endif %}
+
+{% if 'classified_from' in s.annotations %}
+{% set classified_from = s.annotations['classified_from'].value %}
+{% set enum = schemaview.get_enum(s.range) %}
+// CLASSIFYING CATEGORY FROM OTHER SLOT {{enum.permissible_values}} .. {{classified_from}}
+{% for pv in enum.permissible_values.values() %}
+// PV = {{pv.text}}
+{% if 'expr' in pv.annotations %}
+{% set expr = pv.annotations['expr'] %}
+{{ spred }}(i, "{{ pv.text }}" ) :-
+     {{ classified_from }}(i, v),
+     {{expr.value}} .
+{% endif %}
+{% endfor %}
 {% endif %}
 
 {% if not s.multivalued %}
@@ -89,8 +212,9 @@ validation_result(
   i,
   "{{ cpred }}",
   "{{ s.name }}",
-  v1,
-  "") :-
+  "",
+  //v1,
+  "got two distinct values for subject and predicate") :-
     {{ spred }}(i, v1),
     {{ spred }}(i, v2),
     v1 != v2. 
@@ -98,7 +222,7 @@ validation_result(
 
 {% if s.required %}
 validation_result(
-  "sh:MaxCountConstraintComponent",
+  "sh:MinCountConstraintComponent",
   i,
   "{{ cpred }}",
   "{{ s.name }}",
@@ -110,21 +234,20 @@ validation_result(
 
 {% if s.maximum_value %}
 validation_result(
-  "sh:MaxValueTODO",
+  "sh:MaxInclusiveConstraintComponent",
   i,
   "{{ cpred }}",
   "{{s.name}}",
-  v,
+  to_string(v),
   "Maximum is {{s.maximum_value}}") :-
     {{ cpred }}(i),
     {{spred}}(i, v),
-    literal_number(v,num),
-    num > {{ s.maximum_value }}.
+    v > {{ s.maximum_value }}.
 {% endif %}
 
-{% if s.range %}
+{% if s.range and not s.range in schemaview.all_types() %}
 validation_result(
-  "sh:Range",
+  "sh:ClassConstraintComponent",
   i,
   "{{ cpred }}",
   "{{s.name}}",
@@ -138,6 +261,8 @@ validation_result(
 {% endfor %}
 // end of class slots block
 
+
+
 {% endfor %}
 // end of classes block
 
@@ -145,11 +270,14 @@ validation_result(
 // -- Types --
 // -------------
 {% for t in schemaview.all_types().values() %}
-// Type: {{t.name}}
-{% set tpred = gen.pred(t) -%}
-.decl {{ tpred }}(i: symbol)
-{{ tpred }}(i) :- literal_symbol(i, _).
-{{ tpred }}(i) :- literal_number(i, _).
+{% set type_type = gen.type_to_datalog_type(t) %}
+// Type: {{t.name}} . {{ type_type }}
+//{% set tpred = gen.pred(t) -%}
+//.decl {{ tpred }}(i: {{type_type}})
+//{% if type_type == 'number' %}
+//{% endif %}
+//{{ tpred }}(i) :- literal_symbol(i, _).
+//{{ tpred }}(i) :- literal_number(i, _).
 // TODO!
 {% endfor %}
 // end of types block
@@ -174,6 +302,11 @@ validation_result(
 
 """
 
+@dataclass
+class Reification:
+    subject: SlotDefinitionName = None
+    predicate: SlotDefinitionName = None
+    object: SlotDefinitionName = None
 
 class DatalogGenerator(Generator):
     """
@@ -233,6 +366,14 @@ class DatalogGenerator(Generator):
     def meaning_uri(self, curie: str):
         return self.schemaview.expand_curie(curie)
 
+    def domains(self, slot: SlotDefinition) -> List[ClassDefinitionName]:
+        sv = self.schemaview
+        domains = []
+        for cn in sv.all_classes().keys():
+            if slot.name in sv.class_slots(cn, direct=True):
+                domains.append(cn)
+        return domains
+
     def get_slot_range(self, sn: SlotDefinitionName):
         """
         TEMPORARY
@@ -245,6 +386,83 @@ class DatalogGenerator(Generator):
             return self.get_slot_range(slot.is_a)
         else:
             raise ValueError(f'No range for slot {sn}')
+
+    def datalog_type(self, s: Union[SlotDefinition, SlotDefinitionName]) -> str:
+        sv = self.schemaview
+        if not isinstance(s, SlotDefinition):
+            s = sv.get_slot(s)
+        if s.range in sv.all_types():
+            return self.type_to_datalog_type(s.range)
+        return 'identifier'
+
+    def parents(self, e: Definition) -> List[DefinitionName]:
+        sv = self.schemaview
+        if isinstance(e, SlotDefinition):
+            return sv.slot_parents(e.name)
+        elif isinstance(e, ClassDefinition):
+            return sv.class_parents(e.name)
+        else:
+            raise ValueError(f'Must be slot or class: {e}')
+
+    def slot_is_numeric(self, s: Union[SlotDefinition, SlotDefinitionName]) -> bool:
+        return self.datalog_type(s) == 'number'
+
+    def is_transitive(self, s: SlotDefinition) -> bool:
+        return self.has_annotation(s, 'transitive') or self.has_annotation(s, 'transitive_closure_of')
+
+    def is_reflexive(self, s: SlotDefinition) -> bool:
+        return self.has_annotation(s, 'transitive')
+
+    def is_symmetric(self, s: SlotDefinition) -> bool:
+        return s.symmetric
+
+    def has_annotation(self, s: SlotDefinition, a: str) -> bool:
+        return a in s.annotations
+
+    def type_to_datalog_type(self, t: Union[TypeDefinition, TypeDefinitionName]) -> str:
+        sv = self.schemaview
+        if not isinstance(t, TypeDefinition):
+            t = sv.get_type(t)
+        if t.base == 'int' or t.base == 'float' or t.base == 'Decimal':
+            return 'number'
+        else:
+            return 'symbol'
+
+    def type_is_numeric(self, t: Union[TypeDefinition, TypeDefinitionName]) -> bool:
+        return self.type_to_datalog_type(t) == 'number'
+
+    def reification_of(self, cn: ClassDefinitionName) -> Optional[Reification]:
+        """
+        TODO: move to schemaview
+        """
+        sv = self.schemaview
+        if sv.is_relationship(cn):
+            islots = sv.class_induced_slots(cn)
+            su = None
+            pr = None
+            ob = None
+            for islot in islots:
+                for anc in sv.class_ancestors(cn):
+                    slot_uri = sv.induced_slot(islot.name, anc).slot_uri
+                    if slot_uri == 'rdf:subject':
+                        su = islot
+                    if slot_uri == 'rdf:predicate':
+                        pr = islot
+                    if slot_uri == 'rdf:object':
+                        ob = islot
+            if pr is None:
+                logging.error(f'No predicate for {cn}')
+                return None
+            if ob is None:
+                logging.error(f'No object for {cn}')
+                return None
+            reif = Reification(subject=su,
+                               predicate=pr,
+                               object=ob)
+            return reif
+        else:
+            return None
+
 
 
 @shared_arguments(DatalogGenerator)
