@@ -91,6 +91,12 @@ validation_result(
     num > 999.
 ```
 
+`linkml_datalog.engines.datalog_engine` will do this compilation, translate your data to relational facts, then wrap calls to Souffle, exporting inferred facts to a working directory
+
+The engine will then read back all `validation_result` facts and translate these to the LinkML validation data model (influenced by SHACL)
+
+Currently other inferred facts are not read back in, but in future a new data object will be created.
+
 ## Motivation / Future Extensions
 
 The above example shows functionality that could easily be achieved by other means:
@@ -146,7 +152,8 @@ Compilation to datalog will also handle associative classes (e.g. reified statem
 given:
 
 ```yaml
-Relationship:
+classes:
+  Relationship:
     class_uri: rdf:Statement
     slots:
       - started_at_time
@@ -168,6 +175,21 @@ Relationship:
       related to:
         range: Person
         required: true
+
+slots:
+  sibling_of:
+    inverse: sibling_of
+    slot_uri: famrel:01
+
+enums:
+  FamilialRelationshipType:
+    permissible_values:
+      SIBLING_OF:
+        meaning: famrel:01
+      PARENT_OF:
+        meaning: famrel:02
+      CHILD_OF:
+        meaning: famrel:03
 ```
 
 this will assert a de-reified triple:
