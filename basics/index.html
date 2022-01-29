@@ -257,9 +257,68 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Basics
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Basics
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compilation" class="md-nav__link">
+    Compilation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#facts" class="md-nav__link">
+    Facts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution" class="md-nav__link">
+    Execution
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parsing" class="md-nav__link">
+    Parsing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inferences" class="md-nav__link">
+    Inferences
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -275,21 +334,6 @@
     <li class="md-nav__item">
       <a href="../translations/" class="md-nav__link">
         Translations
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../annotations/" class="md-nav__link">
-        Annotations
       </a>
     </li>
   
@@ -345,6 +389,49 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compilation" class="md-nav__link">
+    Compilation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#facts" class="md-nav__link">
+    Facts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution" class="md-nav__link">
+    Execution
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parsing" class="md-nav__link">
+    Parsing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inferences" class="md-nav__link">
+    Inferences
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -361,13 +448,16 @@
 
 
 <h1 id="basics">Basics</h1>
+<p>The linkml-dl wrapper works by executing the following steps:</p>
 <ol>
-<li>Schema is compiled to Souffle DL problem (see generated schema.dl file)</li>
+<li>The schema is compiled to Souffle DL problem (see generated schema.dl file)</li>
 <li>Any embedded logic program in the schema is also added</li>
 <li>Data is converted to generic triple-like tuples (see <code>*.facts</code>)</li>
-<li>Souffle executed</li>
+<li>Souffle is executed</li>
 <li>Inferred validation results turned into objects</li>
+<li>TODO: other inferred facts are incorporated back into objects</li>
 </ol>
+<h2 id="compilation">Compilation</h2>
 <p>Assuming input like this:</p>
 <pre><code class="language-yaml">classes:
   Person:
@@ -399,8 +489,19 @@ validation_result(
     literal_number(v,num),
     num &gt; 999.
 </code></pre>
-<p><code>linkml_datalog.engines.datalog_engine</code> will do this compilation, translate your data to relational facts, then wrap calls to Souffle, exporting inferred facts to a working directory</p>
+<p>(note that most users never need to see these programs, but if you want to write advanced rules it is useful to understand the structure)</p>
+<h2 id="facts">Facts</h2>
+<p>The linkml data file (which can be JSON, YAML, RDF, or TSV) is converted to a triple-like model following the souffle spec:</p>
+<pre><code class="language-prolog">.decl triple(s:symbol, p:symbol, o:symbol)
+.decl literal_number(s:symbol, o:number)
+.decl literal_symbol(s:symbol, o:symbol)
+</code></pre>
+<p>Every slot-value assignment is turned into a triple. If the value is a literal/atom then an additional fact is added mapping the node to the number or symbol value.</p>
+<h2 id="execution">Execution</h2>
+<p><code>linkml_datalog.engines.datalog_engine</code> will do this compilation, translate your data to relational facts, then wrap calls to Souffle</p>
+<h2 id="parsing">Parsing</h2>
 <p>The engine will then read back all <code>validation_result</code> facts and translate these to the LinkML validation data model (influenced by SHACL)</p>
+<h2 id="inferences">Inferences</h2>
 <p>Currently other inferred facts are not read back in, but in future a new data object will be created.</p>
 
               

@@ -60,7 +60,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#translations" class="md-skip">
+        <a href="#translations-of-linkml-to-datalog" class="md-skip">
           Skip to content
         </a>
       
@@ -272,25 +272,76 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Translations
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Translations
       </a>
       
-    </li>
-  
+        
 
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
     
-      
-      
-      
-
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inheritance" class="md-nav__link">
+    Inheritance
+  </a>
   
-    <li class="md-nav__item">
-      <a href="../annotations/" class="md-nav__link">
-        Annotations
-      </a>
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ranges" class="md-nav__link">
+    Ranges
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inverses" class="md-nav__link">
+    Inverses
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#association-classes" class="md-nav__link">
+    Association classes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#slot-logical-characteristics" class="md-nav__link">
+    Slot logical characteristics
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-metamodel-translations" class="md-nav__link">
+    Other metamodel translations
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -345,6 +396,56 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inheritance" class="md-nav__link">
+    Inheritance
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ranges" class="md-nav__link">
+    Ranges
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inverses" class="md-nav__link">
+    Inverses
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#association-classes" class="md-nav__link">
+    Association classes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#slot-logical-characteristics" class="md-nav__link">
+    Slot logical characteristics
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-metamodel-translations" class="md-nav__link">
+    Other metamodel translations
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -360,16 +461,40 @@
 </a>
 
 
-<h1 id="translations">Translations</h1>
+<h1 id="translations-of-linkml-to-datalog">Translations of LinkML to Datalog</h1>
+<p>LinkML is primarily a data modeling language in the mold of
+JSON-Schema, UML, or a shape language like SHACL. The core is
+deliberately simple and does not have complex semantics.</p>
+<p>LinkML is also designed to be flexible, and there are extensions to
+the language that allow for more expressivity.</p>
+<h2 id="inheritance">Inheritance</h2>
+<p>See: <a href="https://linkml.io/linkml/schemas/inheritance.html">inheritance</a></p>
 <p><code>is_a</code> and <code>mixin</code> slots are used in inference of categories.</p>
-<p>E.g. if <code>Person is_a NamedThing</code>, then:</p>
+<p>E.g. given:</p>
+<pre><code class="language-yaml">classes:
+  Person:
+    is_a: NamedThing
+</code></pre>
+<p>the following datalog is exported:</p>
 <pre><code class="language-prolog">NamedThing(i) :- Person(i)
 </code></pre>
-<p>This is also used for ranges; e.g if Person has a slot <code>sibling_of</code> which has range <code>Person</code>, this will generate:</p>
+<p>This means someone querying data for instances of NamedThing would get instances of Person</p>
+<p>of course, a transitive hierarchy can be specified.</p>
+<h2 id="ranges">Ranges</h2>
+<p>See: <a href="https://linkml.io/linkml/schemas/slots.html#ranges">ranges</a></p>
+<p>ranges are translated into validation checks.</p>
+<p>E.g. given:</p>
+<pre><code class="language-yaml">classes:
+  Person:
+    attributes:
+      sibling_of: Person
+</code></pre>
+<p>We get:</p>
 <pre><code class="language-prolog">validation_result('sh:ClassConstraintComponent', ...) :-
   Person(i), sibling_of(i,j), ! Person(j).
 </code></pre>
-<p>Slots can be declared as inverses:</p>
+<h2 id="inverses">Inverses</h2>
+<p>Slots can be declared as <a href="https://w3id.org/linkml/inverse">inverses</a>:</p>
 <pre><code class="language-yaml">sibling_of:
     is_a: person_to_person_related_to
     inverse: sibling_of
@@ -377,11 +502,13 @@
 <p>This will generate</p>
 <pre><code class="language-yaml">sibling_of(i,j) :- sibling_of(j,i).
 </code></pre>
-<p>Compilation to datalog will also handle associative classes (e.g. reified statements). E.g.</p>
+<h2 id="association-classes">Association classes</h2>
+<p>Compilation to datalog will also handle associative classes (e.g. reified statements). This is very useful when we want to be able to model
+associations such as familiar relationships or events such as marriage as first-class entities, but also have the convenience of a direct link:</p>
 <p>given:</p>
 <pre><code class="language-yaml">classes:
   Relationship:
-    class_uri: rdf:Statement
+    class_uri: rdf:Statement  ## REIFICATION
     slots:
       - started_at_time
       - ended_at_time
@@ -430,9 +557,62 @@ enums:
       - related_to: P:001
         type: SIBLING_OF
 </code></pre>
-<p>There will be an inferred </p>
+<p>There will be an inferred fact:</p>
 <pre><code class="language-prolog">sibling_of(P:002, P:001)
 </code></pre>
+<h2 id="slot-logical-characteristics">Slot logical characteristics</h2>
+<p>Additional characteristics can be specified as annotations</p>
+<ul>
+<li><a href="https://w3id.org/linkml/annotations">annotations</a></li>
+</ul>
+<p>Supported:</p>
+<ul>
+<li>transitive</li>
+<li>reflexive</li>
+<li>transitive_closure_of</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-yaml">  ancestor_of:
+    is_a: person_to_person_related_to
+    annotations:
+      transitive_closure_of: parent_of
+</code></pre>
+<p>these will be added as bona-fide metamodel slots in LinkML 1.2.</p>
+<p>A special annotation is <code>classified_from</code>, this can be used to auto-classify using an enum based on another slot</p>
+<pre><code class="language-yaml">slots:
+  age_category:
+    range: AgeCategory
+    annotations:
+      classified_from: age_in_years
+
+enums:
+  AgeCategory:
+    permissible_values:
+      adult:
+        meaning: HsapDv:0000087
+        annotations:
+          expr: v &gt;= 19
+      infant:
+        meaning: HsapDv:0000083
+        annotations:
+          expr: v &gt;= 0, v &lt;= 2
+      adolescent:
+        meaning: HsapDv:0000086
+        annotations:
+          expr: v &gt;= 13, v &lt;= 18
+</code></pre>
+<p>This can be used to auto-assign enums based on numeric values for age.</p>
+<p>In LinkML 1.2 this will be done via classification rules.</p>
+<h2 id="other-metamodel-translations">Other metamodel translations</h2>
+<p>"informative" parts of the model intended for humans are not translated to datalog, as they have no logical entailments</p>
+<p>But there are other constructs coming in LinkML 1.2</p>
+<ul>
+<li>slot relational characteristics: transitivity, symmetry, ...</li>
+<li>rich expression language</li>
+<li>conditional rules</li>
+<li>classification rules</li>
+</ul>
+<p>These will all have direct translations for datalog. For now it is necessary to manually encoded datalog rules for these.</p>
 
               
             </article>
@@ -462,13 +642,13 @@ enums:
       
       
         
-        <a href="../annotations/" class="md-footer__link md-footer__link--next" aria-label="Next: Annotations" rel="next">
+        <a href="../schema-rules/" class="md-footer__link md-footer__link--next" aria-label="Next: Schema Rules" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Annotations
+              Schema Rules
             </div>
           </div>
           <div class="md-footer__button md-icon">

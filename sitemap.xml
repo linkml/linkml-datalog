@@ -6,11 +6,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://linkml.github.io/linkml-datalog/annotations/</loc>
-         <lastmod>2022-01-29</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://linkml.github.io/linkml-datalog/basics/</loc>
          <lastmod>2022-01-29</lastmod>
          <changefreq>daily</changefreq>

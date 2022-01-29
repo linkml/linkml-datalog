@@ -278,21 +278,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../annotations/" class="md-nav__link">
-        Annotations
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../schema-rules/" class="md-nav__link">
         Schema Rules
       </a>
@@ -317,9 +302,67 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Motivation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Motivation
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    Use Cases
+  </a>
+  
+    <nav class="md-nav" aria-label="Use Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#biolink" class="md-nav__link">
+    Biolink
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gff3" class="md-nav__link">
+    GFF3
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annotation-qc" class="md-nav__link">
+    Annotation QC
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -344,6 +387,48 @@
   
     
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    Use Cases
+  </a>
+  
+    <nav class="md-nav" aria-label="Use Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#biolink" class="md-nav__link">
+    Biolink
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gff3" class="md-nav__link">
+    GFF3
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annotation-qc" class="md-nav__link">
+    Annotation QC
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -375,6 +460,22 @@
 <li>Using dedicated <em>annotations</em> -- these may become bona fide metamodel slots in the futur</li>
 <li>including rules in the header of your schema</li>
 </ol>
+<h2 id="use-cases">Use Cases</h2>
+<h3 id="biolink">Biolink</h3>
+<p>TODO</p>
+<h3 id="gff3">GFF3</h3>
+<p>There are many business rules that need encoded in a GFF schema:</p>
+<ul>
+<li>if the genome is non-circular then start&lt;=end</li>
+<li>a codon is always of length 3</li>
+<li>there exists some intron between two adjacent exons</li>
+</ul>
+<p>See more:</p>
+<ul>
+<li><a href="https://www.biorxiv.org/content/10.1101/006650v1">Formalization of Genome Interval Relations</a></li>
+</ul>
+<h3 id="annotation-qc">Annotation QC</h3>
+<p>Many annotation systems have QC rules TODO</p>
 
               
             </article>

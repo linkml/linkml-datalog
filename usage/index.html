@@ -242,9 +242,47 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Usage
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Usage
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    Validation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inferring-new-slot-values" class="md-nav__link">
+    Inferring new slot values
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -275,21 +313,6 @@
     <li class="md-nav__item">
       <a href="../translations/" class="md-nav__link">
         Translations
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../annotations/" class="md-nav__link">
-        Annotations
       </a>
     </li>
   
@@ -345,6 +368,28 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    Validation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inferring-new-slot-values" class="md-nav__link">
+    Inferring new slot values
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -361,11 +406,65 @@
 
 
 <h1 id="usage">Usage</h1>
-<p>Pass in a schema and a data file</p>
+<h2 id="validation">Validation</h2>
+<p>Minimally you need to specify two inputs:</p>
+<ul>
+<li>A <a href="https://linkml.io/linkml/schemas">linkml schema</a></li>
+<li>A datafile in YAML, JSON, RDF, or TSV conformant with the schema</li>
+</ul>
+<p>The current main use case is data validation. Pass in your schema and data:</p>
 <pre><code class="language-bash">linkml-dl -d tmp -s personinfo.yaml example_personinfo_data.yaml
 </code></pre>
 <p>The output will be a ValidationReport object, in yaml</p>
-<p>e.g.</p>
+<p>For example, given a simple schema modeling Person objects, including an age slot with a specified range:</p>
+<pre><code class="language-yaml">id: https://w3id.org/linkml/examples/personinfo
+name: personinfo
+description: |-
+  Simple demo person schema
+default_curi_maps:
+  - semweb_context
+imports:
+  - linkml:types
+prefixes:
+  personinfo: https://w3id.org/linkml/examples/personinfo/
+  linkml: https://w3id.org/linkml/
+  P: https://example.org/P/
+default_prefix: personinfo
+default_range: string
+
+classes:
+
+  Container:
+    tree_root: true
+    attributes:
+      persons:
+        range: Person
+        inlined: true
+        inlined_as_list: true
+        multivalued: true
+
+  Person:
+    description: &gt;-
+      A person (alive, dead, undead, or fictional).
+    attributes:
+      id:
+        identifier: true
+        slot_uri: schema:identifier
+      name:
+        slot_uri: schema:name
+        required: true
+      age_in_years:
+        range: integer
+        minimum_value: 0
+        maximum_value: 999
+</code></pre>
+<p>Data a data object:</p>
+<pre><code class="language-yaml">persons:
+  - id: P:003
+    name: bobby
+    age_in_years: 100001
+</code></pre>
+<p>Then we will get a validation result object telling us we have violated a MaxValue constraint:</p>
 <pre><code class="language-yaml">- type: sh:MaxValue
   subject: https://example.org/P/003
   instantiates: Person
@@ -373,10 +472,56 @@
   object_str: '100001'
   info: Maximum is 999
 </code></pre>
-<p>Currently, to look at inferred edges, consult the directory you specified in <code>-d</code></p>
-<p>E.g.</p>
-<p><code>tmp/Person_grandfather_of.csv</code></p>
-<p>Will have a subject and object tuple P:005 to P:001</p>
+<p>Note that this in itself is not so impressive - it is more
+conventional to use something like jsonschema or the builtin linkml
+validator to do this kind of task.</p>
+<p>However, because we are using a datalog engine behind the scenes we can do more powerful inferences and checks</p>
+<h2 id="inferring-new-slot-values">Inferring new slot values</h2>
+<p>The above example demonstrates the validation use case.</p>
+<p>We can also add information to the schema about transitive relations as well as custom rules.</p>
+<p>For example:</p>
+<pre><code class="language-bash">linkml-dl -s tests/inputs/personinfo.yaml tests/inputs/example_personinfo_data.yaml -d tmp
+</code></pre>
+<p>If the input set of objects include:</p>
+<pre><code class="language-yaml">  - id: P:001
+  - id: P:004
+    has_familial_relationships:
+      - related_to: P:001
+        type: PARENT_OF
+  - id: P:005
+    has_familial_relationships:
+      - related_to: P:004
+        type: PARENT_OF
+    gender: cisgender man
+</code></pre>
+<p>and the schema has a schema-level rules:</p>
+<pre><code class="language-yaml">annotations:
+  datalog: |-
+
+    grandparent_of(i, j) :-
+        parent_of(i, z),
+        parent_of(z, j).
+
+    grandfather_of(i, j) :-
+        grandparent_of(i, j),
+        is_man(i).
+</code></pre>
+<p>(TODO: this can be specified in a more compact way now with annotations on predicates)</p>
+<p>the above exert elides some details but the basic idea is that we have transitive slot values inferred. Currently, to see these, consult the directory you specified in <code>-d</code> E.g. <code>tmp/Person_grandfather_of.csv</code></p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>grandfather_of</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>https://example.org/P/005</td>
+<td>https://example.org/P/001</td>
+</tr>
+</tbody>
+</table>
 <p>In future the inferences will be incorporated back into the core objects</p>
 
               
