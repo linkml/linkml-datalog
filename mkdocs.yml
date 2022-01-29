@@ -1,0 +1,16 @@
+site_name: "LinkML-datalog"
+theme:
+  name: material
+  analytics:
+    gtag: G-2SYBSJVZ23
+nav:
+  - Introduction: index.md
+  - Installation: install.md
+  - Usage: usage.md
+  - Basics: basics.md
+  - Translations: translations.md
+  - Annotations: annotations.md
+  - Schema Rules: schema-rules.md
+  - Motivation: motivation.md
+site_url: https://linkml.github.io/linkml-datalog/
+repo_url: https://github.com/linkml/linkml-datalog/
