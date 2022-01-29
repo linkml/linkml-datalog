@@ -24,6 +24,10 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.e6a45f82.min.css">
         
+          
+          
+          <meta name="theme-color" content="#00bdd6">
+        
       
     
     
@@ -50,7 +54,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="cyan" data-md-color-accent="">
   
     
     
@@ -355,6 +359,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#templated-ontology-generation" class="md-nav__link">
+    Templated ontology generation
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -423,6 +434,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#templated-ontology-generation" class="md-nav__link">
+    Templated ontology generation
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -453,11 +471,11 @@
 </ul>
 <p>In fact the core linkml library already has wrappers for these. See <a href="https://linkml.io/linkml/data/index.html">working with data</a> in linkml guide.</p>
 <p>However, jsonschema in particular offers very limited expressivity. There are many more opportunities for expressivity with linkml.</p>
-<p>In particular, LinkML 1.2 introduces autoclassification rules, conditional logic, and complex expressions -- THESE ARE NOT TRANSLATED YET, but they will be in future.</p>
+<p>In particular, LinkML 1.2 introduces autoclassification rules, conditional logic, and complex expressions -- <strong>THESE ARE NOT TRANSLATED YET</strong>, but they will be in future.</p>
 <p>For now there are three ways to get expressive logical rules in:</p>
 <ol>
 <li>Using existing metamodel logical slots</li>
-<li>Using dedicated <em>annotations</em> -- these may become bona fide metamodel slots in the futur</li>
+<li>Using dedicated <em>annotations</em> -- these may become bona fide metamodel slots in the future</li>
 <li>including rules in the header of your schema</li>
 </ol>
 <h2 id="use-cases">Use Cases</h2>
@@ -476,6 +494,12 @@
 </ul>
 <h3 id="annotation-qc">Annotation QC</h3>
 <p>Many annotation systems have QC rules TODO</p>
+<h3 id="templated-ontology-generation">Templated ontology generation</h3>
+<p>See <a href="https://linkml.io/linkml-owl">linkml-owl</a></p>
+<p>When generating OWL ontologies from data we often want to perform
+inference over the input data, to check for consistency, and
+conformance to rules about structure. This is typically different from
+the axioms we use over the compiled OWL ontology.</p>
 
               
             </article>

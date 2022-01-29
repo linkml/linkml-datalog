@@ -24,6 +24,10 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.e6a45f82.min.css">
         
+          
+          
+          <meta name="theme-color" content="#00bdd6">
+        
       
     
     
@@ -50,7 +54,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="cyan" data-md-color-accent="">
   
     
     
@@ -496,7 +500,6 @@ the language that allow for more expressivity.</p>
 <h2 id="inverses">Inverses</h2>
 <p>Slots can be declared as <a href="https://w3id.org/linkml/inverse">inverses</a>:</p>
 <pre><code class="language-yaml">sibling_of:
-    is_a: person_to_person_related_to
     inverse: sibling_of
 </code></pre>
 <p>This will generate</p>
@@ -573,7 +576,6 @@ enums:
 </ul>
 <p>Example:</p>
 <pre><code class="language-yaml">  ancestor_of:
-    is_a: person_to_person_related_to
     annotations:
       transitive_closure_of: parent_of
 </code></pre>

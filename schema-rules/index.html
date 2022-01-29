@@ -24,6 +24,10 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.e6a45f82.min.css">
         
+          
+          
+          <meta name="theme-color" content="#00bdd6">
+        
       
     
     
@@ -50,7 +54,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="cyan" data-md-color-accent="">
   
     
     
@@ -348,7 +352,10 @@
 <h1 id="schema-level-rules">Schema level rules</h1>
 <p>For now, you can also include your own rules in the header of your schema as an annotation</p>
 <p>E.g. see tests/inputs/personinfo.yaml, which has this as a schema-level annotation:</p>
-<pre><code class="language-prolog">
+<pre><code class="language-yaml">id: https://w3id.org/linkml/examples/personinfo
+
+annotations:
+  datalog: |-
     grandparent_of(i, j) :-
         parent_of(i, z),
         parent_of(z, j).
