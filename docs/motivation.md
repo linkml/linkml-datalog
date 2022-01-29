@@ -9,12 +9,12 @@ In fact the core linkml library already has wrappers for these. See [working wit
 
 However, jsonschema in particular offers very limited expressivity. There are many more opportunities for expressivity with linkml.
 
-In particular, LinkML 1.2 introduces autoclassification rules, conditional logic, and complex expressions -- THESE ARE NOT TRANSLATED YET, but they will be in future.
+In particular, LinkML 1.2 introduces autoclassification rules, conditional logic, and complex expressions -- **THESE ARE NOT TRANSLATED YET**, but they will be in future.
 
 For now there are three ways to get expressive logical rules in:
 
  1. Using existing metamodel logical slots
- 2. Using dedicated *annotations* -- these may become bona fide metamodel slots in the futur
+ 2. Using dedicated *annotations* -- these may become bona fide metamodel slots in the future
  3. including rules in the header of your schema
 
 ## Use Cases
@@ -38,3 +38,12 @@ See more:
 ### Annotation QC
 
 Many annotation systems have QC rules TODO
+
+### Templated ontology generation
+
+See [linkml-owl](https://linkml.io/linkml-owl)
+
+When generating OWL ontologies from data we often want to perform
+inference over the input data, to check for consistency, and
+conformance to rules about structure. This is typically different from
+the axioms we use over the compiled OWL ontology.

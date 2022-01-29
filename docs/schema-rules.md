@@ -4,8 +4,11 @@ For now, you can also include your own rules in the header of your schema as an 
 
 E.g. see tests/inputs/personinfo.yaml, which has this as a schema-level annotation:
 
-```prolog
+```yaml
+id: https://w3id.org/linkml/examples/personinfo
 
+annotations:
+  datalog: |-
     grandparent_of(i, j) :-
         parent_of(i, z),
         parent_of(z, j).

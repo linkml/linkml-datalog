@@ -59,7 +59,6 @@ Slots can be declared as [inverses](https://w3id.org/linkml/inverse):
 
 ```yaml
 sibling_of:
-    is_a: person_to_person_related_to
     inverse: sibling_of
 ```
 
@@ -157,7 +156,6 @@ Example:
 
 ```yaml
   ancestor_of:
-    is_a: person_to_person_related_to
     annotations:
       transitive_closure_of: parent_of
 ```

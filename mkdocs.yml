@@ -3,6 +3,11 @@ theme:
   name: material
   analytics:
     gtag: G-2SYBSJVZ23
+  palette:
+    scheme: slate
+    primary: cyan
+plugins:
+  - search
 nav:
   - Introduction: index.md
   - Installation: install.md
