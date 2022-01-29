@@ -9,7 +9,6 @@ nav:
   - Usage: usage.md
   - Basics: basics.md
   - Translations: translations.md
-  - Annotations: annotations.md
   - Schema Rules: schema-rules.md
   - Motivation: motivation.md
 site_url: https://linkml.github.io/linkml-datalog/

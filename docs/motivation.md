@@ -17,4 +17,24 @@ For now there are three ways to get expressive logical rules in:
  2. Using dedicated *annotations* -- these may become bona fide metamodel slots in the futur
  3. including rules in the header of your schema
 
+## Use Cases
 
+### Biolink
+
+TODO
+
+### GFF3
+
+There are many business rules that need encoded in a GFF schema:
+
+ * if the genome is non-circular then start<=end
+ * a codon is always of length 3
+ * there exists some intron between two adjacent exons
+
+See more:
+
+ * [Formalization of Genome Interval Relations](https://www.biorxiv.org/content/10.1101/006650v1)
+
+### Annotation QC
+
+Many annotation systems have QC rules TODO

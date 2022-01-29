@@ -1,10 +1,15 @@
 # Basics
 
- 1. Schema is compiled to Souffle DL problem (see generated schema.dl file)
+The linkml-dl wrapper works by executing the following steps:
+
+ 1. The schema is compiled to Souffle DL problem (see generated schema.dl file)
  2. Any embedded logic program in the schema is also added
  3. Data is converted to generic triple-like tuples (see `*.facts`)
- 4. Souffle executed
+ 4. Souffle is executed
  5. Inferred validation results turned into objects
+ 6. TODO: other inferred facts are incorporated back into objects
+
+## Compilation
 
 Assuming input like this:
 
@@ -43,8 +48,28 @@ validation_result(
     num > 999.
 ```
 
-`linkml_datalog.engines.datalog_engine` will do this compilation, translate your data to relational facts, then wrap calls to Souffle, exporting inferred facts to a working directory
+(note that most users never need to see these programs, but if you want to write advanced rules it is useful to understand the structure)
+
+## Facts
+
+The linkml data file (which can be JSON, YAML, RDF, or TSV) is converted to a triple-like model following the souffle spec:
+
+```prolog
+.decl triple(s:symbol, p:symbol, o:symbol)
+.decl literal_number(s:symbol, o:number)
+.decl literal_symbol(s:symbol, o:symbol)
+```
+
+Every slot-value assignment is turned into a triple. If the value is a literal/atom then an additional fact is added mapping the node to the number or symbol value.
+
+## Execution
+
+`linkml_datalog.engines.datalog_engine` will do this compilation, translate your data to relational facts, then wrap calls to Souffle
+
+## Parsing
 
 The engine will then read back all `validation_result` facts and translate these to the LinkML validation data model (influenced by SHACL)
+
+## Inferences
 
 Currently other inferred facts are not read back in, but in future a new data object will be created.

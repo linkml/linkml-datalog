@@ -27,4 +27,4 @@ E.g. see tests/inputs/personinfo.yaml, which has this as a schema-level annotati
     is_woman(i) :- gender(i, "http://purl.obolibrary.org/obo/GSSO_000385").
 ```
 
-See tests for more details.
+See tests/ for more details.
