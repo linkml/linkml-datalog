@@ -399,6 +399,8 @@ class DatalogGenerator(Generator):
         for cn in sv.all_classes().keys():
             if slot.name in sv.class_slots(cn, direct=True):
                 domains.append(cn)
+        if slot.domain:
+            domains.append(slot.domain)
         return domains
 
     def get_slot_range(self, sn: SlotDefinitionName):

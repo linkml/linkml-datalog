@@ -4881,6 +4881,8 @@ slots:
 
   part of:
     is_a: overlaps
+    annotations:
+      transitive: true
     description: >-
       holds between parts and wholes (material entities or processes)
     in_subset:

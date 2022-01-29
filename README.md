@@ -21,7 +21,7 @@ Docker containers will be provided in future
 Pass in a schema and a data file
 
 ```bash
-poetry run python -m linkml_datalog.engines.datalog_engine -d tmp -s personinfo.yaml example_personinfo_data.yaml
+poetry run linkml-dl -d tmp -s personinfo.yaml example_personinfo_data.yaml
 ```
 
 The output will be a ValidationReport object, in yaml
