@@ -2,12 +2,10 @@
 
 This project requires [souffle](https://souffle-lang.github.io/)
 
-After installing souffle, install the python here is a normal way.
-
-Until this is released to pypi:
+After installing souffle:
 
 ```bash
-poetry install
+pip install linkml-datalog
 ```
 
 Docker containers will be provided in future
