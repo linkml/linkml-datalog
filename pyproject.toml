@@ -1,7 +1,7 @@
 [tool.poetry]
 version = "0.0.0"
 name = "linkml_datalog"
-description = ""
+description = "Datalog inference over LinkML schemas and data"
 authors = ["cmungall <cjm@berkeleybop.org>"]
 
 [tool.poetry.dependencies]
