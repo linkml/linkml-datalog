@@ -231,9 +231,54 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Installation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Installation
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-souffle" class="md-nav__link">
+    Install Soufflé
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-linkml-datalog" class="md-nav__link">
+    Install LinkML-Datalog
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    Docker
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -334,6 +379,35 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-souffle" class="md-nav__link">
+    Install Soufflé
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-linkml-datalog" class="md-nav__link">
+    Install LinkML-Datalog
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    Docker
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -350,10 +424,21 @@
 
 
 <h1 id="installation">Installation</h1>
-<p>This project requires <a href="https://souffle-lang.github.io/">souffle</a></p>
-<p>After installing souffle:</p>
-<pre><code class="language-bash">pip install linkml-datalog
-</code></pre>
+<h2 id="install-souffle">Install Soufflé</h2>
+<p>This project requires <a href="https://souffle-lang.github.io/">Soufflé</a>, a fast engine
+for executing <a href="https://en.wikipedia.org/wiki/Datalog">datalog</a> programs</p>
+<ul>
+<li><a href="https://souffle-lang.github.io/install">Install Souffle</a></li>
+</ul>
+<p>Make sure the souffle executable is on your command line:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a>souffle --help
+</code></pre></div>
+<h2 id="install-linkml-datalog">Install LinkML-Datalog</h2>
+<p>Python 3.9 is required.</p>
+<p>Install in the standard way from PyPi:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a>pip install linkml-datalog
+</code></pre></div>
+<h2 id="docker">Docker</h2>
 <p>Docker containers will be provided in future</p>
 
               
@@ -420,7 +505,7 @@
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.tabs.link"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
     
     
       <script src="../assets/javascripts/bundle.960e086b.min.js"></script>

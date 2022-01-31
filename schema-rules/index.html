@@ -352,30 +352,30 @@
 <h1 id="schema-level-rules">Schema level rules</h1>
 <p>For now, you can also include your own rules in the header of your schema as an annotation</p>
 <p>E.g. see tests/inputs/personinfo.yaml, which has this as a schema-level annotation:</p>
-<pre><code class="language-yaml">id: https://w3id.org/linkml/examples/personinfo
-
-annotations:
-  datalog: |-
-    grandparent_of(i, j) :-
-        parent_of(i, z),
-        parent_of(z, j).
-
-    grandfather_of(i, j) :-
-        grandparent_of(i, j),
-        is_man(i).
-
-    grandmother_of(i, j) :-
-        grandparent_of(i, j),
-        is_woman(i).
-
-    // GSSO-compliant definitions
-    .decl is_man(i: identifier)
-    .decl is_woman(i: identifier)
-    is_man(i) :- gender(i, &quot;http://purl.obolibrary.org/obo/GSSO_000372&quot;).
-    is_man(i) :- gender(i, &quot;http://purl.obolibrary.org/obo/GSSO_000371&quot;).
-    is_woman(i) :- gender(i, &quot;http://purl.obolibrary.org/obo/GSSO_000384&quot;).
-    is_woman(i) :- gender(i, &quot;http://purl.obolibrary.org/obo/GSSO_000385&quot;).
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="nt">id</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://w3id.org/linkml/examples/personinfo</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a>  <span class="nt">datalog</span><span class="p">:</span> <span class="p p-Indicator">|-</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a>    <span class="no">grandparent_of(i, j) :-</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a>        <span class="no">parent_of(i, z),</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7"></a>        <span class="no">parent_of(z, j).</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a>    <span class="no">grandfather_of(i, j) :-</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10"></a>        <span class="no">grandparent_of(i, j),</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11"></a>        <span class="no">is_man(i).</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13"></a>    <span class="no">grandmother_of(i, j) :-</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14"></a>        <span class="no">grandparent_of(i, j),</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15"></a>        <span class="no">is_woman(i).</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16"></a>
+<a id="__codelineno-0-17" name="__codelineno-0-17"></a>    <span class="no">// GSSO-compliant definitions</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18"></a>    <span class="no">.decl is_man(i: identifier)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19"></a>    <span class="no">.decl is_woman(i: identifier)</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20"></a>    <span class="no">is_man(i) :- gender(i, &quot;http://purl.obolibrary.org/obo/GSSO_000372&quot;).</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21"></a>    <span class="no">is_man(i) :- gender(i, &quot;http://purl.obolibrary.org/obo/GSSO_000371&quot;).</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22"></a>    <span class="no">is_woman(i) :- gender(i, &quot;http://purl.obolibrary.org/obo/GSSO_000384&quot;).</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a>    <span class="no">is_woman(i) :- gender(i, &quot;http://purl.obolibrary.org/obo/GSSO_000385&quot;).</span>
+</code></pre></div>
 <p>See tests/ for more details.</p>
 
               
@@ -442,7 +442,7 @@ annotations:
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.tabs.link"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
     
     
       <script src="../assets/javascripts/bundle.960e086b.min.js"></script>

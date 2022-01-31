@@ -322,6 +322,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#transitive-closures-over" class="md-nav__link">
+    Transitive closures over
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#association-classes" class="md-nav__link">
     Association classes
   </a>
@@ -428,6 +435,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#transitive-closures-over" class="md-nav__link">
+    Transitive closures over
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#association-classes" class="md-nav__link">
     Association classes
   </a>
@@ -466,7 +480,7 @@
 
 
 <h1 id="translations-of-linkml-to-datalog">Translations of LinkML to Datalog</h1>
-<p>LinkML is primarily a data modeling language in the mold of
+<p>LinkML is primarily a data modeling language in the vein of
 JSON-Schema, UML, or a shape language like SHACL. The core is
 deliberately simple and does not have complex semantics.</p>
 <p>LinkML is also designed to be flexible, and there are extensions to
@@ -475,94 +489,106 @@ the language that allow for more expressivity.</p>
 <p>See: <a href="https://linkml.io/linkml/schemas/inheritance.html">inheritance</a></p>
 <p><code>is_a</code> and <code>mixin</code> slots are used in inference of categories.</p>
 <p>E.g. given:</p>
-<pre><code class="language-yaml">classes:
-  Person:
-    is_a: NamedThing
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="nt">classes</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a>  <span class="nt">Person</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a>    <span class="nt">is_a</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">NamedThing</span>
+</code></pre></div>
 <p>the following datalog is exported:</p>
-<pre><code class="language-prolog">NamedThing(i) :- Person(i)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nv">NamedThing</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">)</span> <span class="p">:-</span> <span class="nv">Person</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">)</span>
+</code></pre></div>
 <p>This means someone querying data for instances of NamedThing would get instances of Person</p>
 <p>of course, a transitive hierarchy can be specified.</p>
 <h2 id="ranges">Ranges</h2>
 <p>See: <a href="https://linkml.io/linkml/schemas/slots.html#ranges">ranges</a></p>
 <p>ranges are translated into validation checks.</p>
 <p>E.g. given:</p>
-<pre><code class="language-yaml">classes:
-  Person:
-    attributes:
-      sibling_of: Person
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="nt">classes</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a>  <span class="nt">Person</span><span class="p">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a>    <span class="nt">attributes</span><span class="p">:</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a>      <span class="nt">sibling_of</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Person</span>
+</code></pre></div>
 <p>We get:</p>
-<pre><code class="language-prolog">validation_result('sh:ClassConstraintComponent', ...) :-
-  Person(i), sibling_of(i,j), ! Person(j).
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nf">validation_result</span><span class="p">(</span><span class="s s-Atom">&#39;sh:ClassConstraintComponent&#39;</span><span class="p">,</span> <span class="p">...)</span> <span class="p">:-</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a>  <span class="nv">Person</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">),</span> <span class="nf">sibling_of</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span><span class="s s-Atom">j</span><span class="p">),</span> <span class="p">!</span> <span class="nv">Person</span><span class="p">(</span><span class="s s-Atom">j</span><span class="p">).</span>
+</code></pre></div>
 <h2 id="inverses">Inverses</h2>
 <p>Slots can be declared as <a href="https://w3id.org/linkml/inverse">inverses</a>:</p>
-<pre><code class="language-yaml">sibling_of:
-    inverse: sibling_of
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="nt">sibling_of</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2"></a>    <span class="nt">inverse</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sibling_of</span>
+</code></pre></div>
 <p>This will generate</p>
-<pre><code class="language-yaml">sibling_of(i,j) :- sibling_of(j,i).
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="l l-Scalar l-Scalar-Plain">sibling_of(i,j) :- sibling_of(j,i).</span>
+</code></pre></div>
+<h2 id="transitive-closures-over">Transitive closures over</h2>
+<p>LinkML 1.2 will introduce <a href="https://w3id.org/linkml/transitive_form_of">transitive_form_of</a>,
+to declare that one slot (e.g. <code>ancestor_of</code>) is the transitive form of another slot (e.g <code>parent_of</code>)</p>
+<p>For now, you can get the same semantics from an annotation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="nt">ancestor_of</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2"></a>  <span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3"></a>    <span class="nt">transitive_closure_of</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">parent_of</span>
+</code></pre></div>
+<p>This will generate</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a><span class="l l-Scalar l-Scalar-Plain">ancestor_of(i,j) :- parent_of(j,i).</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2"></a><span class="l l-Scalar l-Scalar-Plain">ancestor_of(i,j) :- parent_of(j,z), ancestor_of(z,j).</span>
+</code></pre></div>
 <h2 id="association-classes">Association classes</h2>
 <p>Compilation to datalog will also handle associative classes (e.g. reified statements). This is very useful when we want to be able to model
 associations such as familiar relationships or events such as marriage as first-class entities, but also have the convenience of a direct link:</p>
 <p>given:</p>
-<pre><code class="language-yaml">classes:
-  Relationship:
-    class_uri: rdf:Statement  ## REIFICATION
-    slots:
-      - started_at_time
-      - ended_at_time
-      - related_to
-      - type
-    slot_usage:
-      related_to:
-        slot_uri: rdf:object
-      type:
-        slot_uri: rdf:predicate
-
-  FamilialRelationship:
-    is_a: Relationship
-    slot_usage:
-      type:
-        range: FamilialRelationshipType
-        required: true
-      related to:
-        range: Person
-        required: true
-
-slots:
-  sibling_of:
-    inverse: sibling_of
-    slot_uri: famrel:01
-
-enums:
-  FamilialRelationshipType:
-    permissible_values:
-      SIBLING_OF:
-        meaning: famrel:01
-      PARENT_OF:
-        meaning: famrel:02
-      CHILD_OF:
-        meaning: famrel:03
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a><span class="nt">classes</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2"></a>  <span class="nt">Relationship</span><span class="p">:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3"></a>    <span class="nt">class_uri</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rdf:Statement</span>  <span class="c1">## REIFICATION</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4"></a>    <span class="nt">slots</span><span class="p">:</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5"></a>      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">started_at_time</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6"></a>      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ended_at_time</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7"></a>      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">related_to</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8"></a>      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">type</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9"></a>    <span class="nt">slot_usage</span><span class="p">:</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10"></a>      <span class="nt">related_to</span><span class="p">:</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11"></a>        <span class="nt">slot_uri</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rdf:object</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12"></a>      <span class="nt">type</span><span class="p">:</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13"></a>        <span class="nt">slot_uri</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rdf:predicate</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14"></a>
+<a id="__codelineno-8-15" name="__codelineno-8-15"></a>  <span class="nt">FamilialRelationship</span><span class="p">:</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16"></a>    <span class="nt">is_a</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Relationship</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17"></a>    <span class="nt">slot_usage</span><span class="p">:</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18"></a>      <span class="nt">type</span><span class="p">:</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19"></a>        <span class="nt">range</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FamilialRelationshipType</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20"></a>        <span class="nt">required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21"></a>      <span class="nt">related to</span><span class="p">:</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22"></a>        <span class="nt">range</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Person</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23"></a>        <span class="nt">required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24"></a>
+<a id="__codelineno-8-25" name="__codelineno-8-25"></a><span class="nt">slots</span><span class="p">:</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26"></a>  <span class="nt">sibling_of</span><span class="p">:</span>
+<a id="__codelineno-8-27" name="__codelineno-8-27"></a>    <span class="nt">inverse</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sibling_of</span>
+<a id="__codelineno-8-28" name="__codelineno-8-28"></a>    <span class="nt">slot_uri</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">famrel:01</span>
+<a id="__codelineno-8-29" name="__codelineno-8-29"></a>
+<a id="__codelineno-8-30" name="__codelineno-8-30"></a><span class="nt">enums</span><span class="p">:</span>
+<a id="__codelineno-8-31" name="__codelineno-8-31"></a>  <span class="nt">FamilialRelationshipType</span><span class="p">:</span>
+<a id="__codelineno-8-32" name="__codelineno-8-32"></a>    <span class="nt">permissible_values</span><span class="p">:</span>
+<a id="__codelineno-8-33" name="__codelineno-8-33"></a>      <span class="nt">SIBLING_OF</span><span class="p">:</span>
+<a id="__codelineno-8-34" name="__codelineno-8-34"></a>        <span class="nt">meaning</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">famrel:01</span>
+<a id="__codelineno-8-35" name="__codelineno-8-35"></a>      <span class="nt">PARENT_OF</span><span class="p">:</span>
+<a id="__codelineno-8-36" name="__codelineno-8-36"></a>        <span class="nt">meaning</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">famrel:02</span>
+<a id="__codelineno-8-37" name="__codelineno-8-37"></a>      <span class="nt">CHILD_OF</span><span class="p">:</span>
+<a id="__codelineno-8-38" name="__codelineno-8-38"></a>        <span class="nt">meaning</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">famrel:03</span>
+</code></pre></div>
 <p>this will assert a de-reified triple:</p>
-<pre><code class="language-prolog">triple(i, p, v) :-
-        triple(i, _container_prop, r),
-        related_to(r, v),
-        type(r, p).
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1"></a><span class="nf">triple</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span> <span class="s s-Atom">p</span><span class="p">,</span> <span class="s s-Atom">v</span><span class="p">)</span> <span class="p">:-</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2"></a>        <span class="nf">triple</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span> <span class="k">_</span><span class="s s-Atom">container_prop</span><span class="p">,</span> <span class="s s-Atom">r</span><span class="p">),</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3"></a>        <span class="nf">related_to</span><span class="p">(</span><span class="s s-Atom">r</span><span class="p">,</span> <span class="s s-Atom">v</span><span class="p">),</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4"></a>        <span class="nf">type</span><span class="p">(</span><span class="s s-Atom">r</span><span class="p">,</span> <span class="s s-Atom">p</span><span class="p">).</span>
+</code></pre></div>
 <p>Such that if you have instance data</p>
-<pre><code class="language-yaml">id: P:002
-    has_familial_relationships:
-      - related_to: P:001
-        type: SIBLING_OF
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="nt">id</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">P:002</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2"></a>    <span class="l l-Scalar l-Scalar-Plain">has_familial_relationships</span><span class="p p-Indicator">:</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3"></a>      <span class="p p-Indicator">-</span> <span class="nt">related_to</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">P:001</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4"></a>        <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">SIBLING_OF</span>
+</code></pre></div>
 <p>There will be an inferred fact:</p>
-<pre><code class="language-prolog">sibling_of(P:002, P:001)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1"></a><span class="nf">sibling_of</span><span class="p">(</span><span class="nv">P</span><span class="s s-Atom">:</span><span class="mi">002</span><span class="p">,</span> <span class="nv">P</span><span class="s s-Atom">:</span><span class="mi">001</span><span class="p">)</span>
+</code></pre></div>
 <h2 id="slot-logical-characteristics">Slot logical characteristics</h2>
 <p>Additional characteristics can be specified as annotations</p>
 <ul>
@@ -575,34 +601,34 @@ enums:
 <li>transitive_closure_of</li>
 </ul>
 <p>Example:</p>
-<pre><code class="language-yaml">  ancestor_of:
-    annotations:
-      transitive_closure_of: parent_of
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1"></a>  <span class="nt">ancestor_of</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2"></a>    <span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3"></a>      <span class="nt">transitive_closure_of</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">parent_of</span>
+</code></pre></div>
 <p>these will be added as bona-fide metamodel slots in LinkML 1.2.</p>
 <p>A special annotation is <code>classified_from</code>, this can be used to auto-classify using an enum based on another slot</p>
-<pre><code class="language-yaml">slots:
-  age_category:
-    range: AgeCategory
-    annotations:
-      classified_from: age_in_years
-
-enums:
-  AgeCategory:
-    permissible_values:
-      adult:
-        meaning: HsapDv:0000087
-        annotations:
-          expr: v &gt;= 19
-      infant:
-        meaning: HsapDv:0000083
-        annotations:
-          expr: v &gt;= 0, v &lt;= 2
-      adolescent:
-        meaning: HsapDv:0000086
-        annotations:
-          expr: v &gt;= 13, v &lt;= 18
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1"></a><span class="nt">slots</span><span class="p">:</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2"></a>  <span class="nt">age_category</span><span class="p">:</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3"></a>    <span class="nt">range</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">AgeCategory</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4"></a>    <span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5"></a>      <span class="nt">classified_from</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">age_in_years</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7"></a><span class="nt">enums</span><span class="p">:</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8"></a>  <span class="nt">AgeCategory</span><span class="p">:</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9"></a>    <span class="nt">permissible_values</span><span class="p">:</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10"></a>      <span class="nt">adult</span><span class="p">:</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11"></a>        <span class="nt">meaning</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">HsapDv:0000087</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12"></a>        <span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13"></a>          <span class="nt">expr</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v &gt;= 19</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14"></a>      <span class="nt">infant</span><span class="p">:</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15"></a>        <span class="nt">meaning</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">HsapDv:0000083</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16"></a>        <span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17"></a>          <span class="nt">expr</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v &gt;= 0, v &lt;= 2</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18"></a>      <span class="nt">adolescent</span><span class="p">:</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19"></a>        <span class="nt">meaning</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">HsapDv:0000086</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20"></a>        <span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21"></a>          <span class="nt">expr</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v &gt;= 13, v &lt;= 18</span>
+</code></pre></div>
 <p>This can be used to auto-assign enums based on numeric values for age.</p>
 <p>In LinkML 1.2 this will be done via classification rules.</p>
 <h2 id="other-metamodel-translations">Other metamodel translations</h2>
@@ -680,7 +706,7 @@ enums:
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.tabs.link"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
     
     
       <script src="../assets/javascripts/bundle.960e086b.min.js"></script>

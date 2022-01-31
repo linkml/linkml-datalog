@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#basics" class="md-skip">
+        <a href="#how-it-works" class="md-skip">
           Skip to content
         </a>
       
@@ -286,15 +286,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#compilation" class="md-nav__link">
-    Compilation
+  <a href="#overview" class="md-nav__link">
+    Overview
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#facts" class="md-nav__link">
-    Facts
+  <a href="#compilation-of-schemas-to-datalog" class="md-nav__link">
+    Compilation of schemas to Datalog
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversion-of-data-to-facts" class="md-nav__link">
+    Conversion of data to Facts
   </a>
   
 </li>
@@ -309,13 +316,6 @@
         <li class="md-nav__item">
   <a href="#parsing" class="md-nav__link">
     Parsing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inferences" class="md-nav__link">
-    Inferences
   </a>
   
 </li>
@@ -400,15 +400,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#compilation" class="md-nav__link">
-    Compilation
+  <a href="#overview" class="md-nav__link">
+    Overview
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#facts" class="md-nav__link">
-    Facts
+  <a href="#compilation-of-schemas-to-datalog" class="md-nav__link">
+    Compilation of schemas to Datalog
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversion-of-data-to-facts" class="md-nav__link">
+    Conversion of data to Facts
   </a>
   
 </li>
@@ -423,13 +430,6 @@
         <li class="md-nav__item">
   <a href="#parsing" class="md-nav__link">
     Parsing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inferences" class="md-nav__link">
-    Inferences
   </a>
   
 </li>
@@ -451,62 +451,87 @@
 </a>
 
 
-<h1 id="basics">Basics</h1>
+<h1 id="how-it-works">How it works</h1>
+<h2 id="overview">Overview</h2>
 <p>The linkml-dl wrapper works by executing the following steps:</p>
-<ol>
+<ul>
 <li>The schema is compiled to Souffle DL problem (see generated schema.dl file)</li>
 <li>Any embedded logic program in the schema is also added</li>
 <li>Data is converted to generic triple-like tuples (see <code>*.facts</code>)</li>
 <li>Souffle is executed</li>
-<li>Inferred validation results turned into objects</li>
-<li>TODO: other inferred facts are incorporated back into objects</li>
-</ol>
-<h2 id="compilation">Compilation</h2>
+<li>Inferred facts are collected:<ul>
+<li>validation results are collected into a results object</li>
+<li>inferred facts are incorporated into new copy of the input object</li>
+</ul>
+</li>
+</ul>
+<h2 id="compilation-of-schemas-to-datalog">Compilation of schemas to Datalog</h2>
 <p>Assuming input like this:</p>
-<pre><code class="language-yaml">classes:
-  Person:
-    attributes:
-      age:
-        range: integer
-        maximum_value: 999
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="nt">classes</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a>  <span class="nt">Person</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a>    <span class="nt">class_uri</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">schema:Person</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a>    <span class="nt">attributes</span><span class="p">:</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a>      <span class="nt">age_in_years</span><span class="p">:</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a>        <span class="nt">range</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7"></a>        <span class="nt">maximum_value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">999</span>
+</code></pre></div>
 <p>The generated souffle program will look like this:</p>
-<pre><code class="language-prolog">.decl Person_age_in_years_asserted(i: identifier, v: value)
-.decl Person_age_in_years(i: identifier, v: value)
-.output Person_age_in_years
-.output Person_age_in_years_asserted
-Person_age_in_years(i, v) :- 
-    Person_age_in_years_asserted(i, v).
-Person_age_in_years_asserted(i, v) :- 
-    Person(i),
-    triple(i, &quot;https://w3id.org/linkml/examples/personinfo/age_in_years&quot;, v).
-
-validation_result(
-  &quot;sh:MaxCountConstraintComponent&quot;,
-  i,
-  &quot;Person&quot;,
-  &quot;age_in_years&quot;,
-  v,
-  &quot;Maximum is 999&quot;) :-
-    Person(i),
-    Person_age_in_years(i, v),
-    literal_number(v,num),
-    num &gt; 999.
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="p">.</span><span class="s s-Atom">decl</span> <span class="nv">Person</span><span class="p">(</span><span class="nn">i</span><span class="p">:</span> <span class="s s-Atom">symbol</span><span class="p">)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="p">.</span><span class="s s-Atom">decl</span> <span class="nv">Person_asserted</span><span class="p">(</span><span class="nn">i</span><span class="p">:</span> <span class="s s-Atom">identifier</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="p">.</span><span class="s s-Atom">output</span> <span class="nv">Person</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="nv">Person_asserted</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">)</span> <span class="p">:-</span> <span class="nf">triple</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span> <span class="nv">RDF_TYPE</span><span class="p">,</span> <span class="s2">&quot;http://schema.org/Person&quot;</span><span class="p">).</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="nv">Person</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">)</span> <span class="p">:-</span> <span class="nv">Person_asserted</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">).</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7"></a><span class="p">.</span><span class="s s-Atom">decl</span> <span class="nv">Person_age_in_years_asserted</span><span class="p">(</span><span class="nn">i</span><span class="p">:</span> <span class="s s-Atom">identifier</span><span class="p">,</span> <span class="nn">v</span><span class="p">:</span> <span class="s s-Atom">value</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8"></a><span class="p">.</span><span class="s s-Atom">decl</span> <span class="nv">Person_age_in_years</span><span class="p">(</span><span class="nn">i</span><span class="p">:</span> <span class="s s-Atom">identifier</span><span class="p">,</span> <span class="nn">v</span><span class="p">:</span> <span class="s s-Atom">value</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="p">.</span><span class="s s-Atom">output</span> <span class="nv">Person_age_in_years</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="p">.</span><span class="s s-Atom">output</span> <span class="nv">Person_age_in_years_asserted</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="nv">Person_age_in_years</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span> <span class="s s-Atom">v</span><span class="p">)</span> <span class="p">:-</span> 
+<a id="__codelineno-1-12" name="__codelineno-1-12"></a>    <span class="nv">Person_age_in_years_asserted</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span> <span class="s s-Atom">v</span><span class="p">).</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13"></a><span class="nv">Person_age_in_years_asserted</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span> <span class="s s-Atom">v</span><span class="p">)</span> <span class="p">:-</span> 
+<a id="__codelineno-1-14" name="__codelineno-1-14"></a>    <span class="nv">Person</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">),</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15"></a>    <span class="nf">triple</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span> <span class="s2">&quot;https://w3id.org/linkml/examples/personinfo/age_in_years&quot;</span><span class="p">,</span> <span class="s s-Atom">v</span><span class="p">).</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16"></a>
+<a id="__codelineno-1-17" name="__codelineno-1-17"></a><span class="nf">validation_result</span><span class="p">(</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18"></a>  <span class="s2">&quot;sh:MaxCountConstraintComponent&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19"></a>  <span class="s s-Atom">i</span><span class="p">,</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20"></a>  <span class="s2">&quot;Person&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21"></a>  <span class="s2">&quot;age_in_years&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22"></a>  <span class="s s-Atom">v</span><span class="p">,</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23"></a>  <span class="s2">&quot;Maximum is 999&quot;</span><span class="p">)</span> <span class="p">:-</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24"></a>    <span class="nv">Person</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">),</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25"></a>    <span class="nv">Person_age_in_years</span><span class="p">(</span><span class="s s-Atom">i</span><span class="p">,</span> <span class="s s-Atom">v</span><span class="p">),</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26"></a>    <span class="nf">literal_number</span><span class="p">(</span><span class="s s-Atom">v</span><span class="p">,</span><span class="s s-Atom">num</span><span class="p">),</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27"></a>    <span class="s s-Atom">num</span> <span class="o">&gt;</span> <span class="mf">999.</span>
+</code></pre></div>
 <p>(note that most users never need to see these programs, but if you want to write advanced rules it is useful to understand the structure)</p>
-<h2 id="facts">Facts</h2>
-<p>The linkml data file (which can be JSON, YAML, RDF, or TSV) is converted to a triple-like model following the souffle spec:</p>
-<pre><code class="language-prolog">.decl triple(s:symbol, p:symbol, o:symbol)
-.decl literal_number(s:symbol, o:number)
-.decl literal_symbol(s:symbol, o:symbol)
-</code></pre>
+<h2 id="conversion-of-data-to-facts">Conversion of data to Facts</h2>
+<p>The LinkML data file is converted to a triple-like model following the souffle spec:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="p">.</span><span class="s s-Atom">decl</span> <span class="nf">triple</span><span class="p">(</span><span class="nn">s</span><span class="p">:</span><span class="s s-Atom">symbol</span><span class="p">,</span> <span class="nn">p</span><span class="p">:</span><span class="s s-Atom">symbol</span><span class="p">,</span> <span class="nn">o</span><span class="p">:</span><span class="s s-Atom">symbol</span><span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="p">.</span><span class="s s-Atom">decl</span> <span class="nf">literal_number</span><span class="p">(</span><span class="nn">s</span><span class="p">:</span><span class="s s-Atom">symbol</span><span class="p">,</span> <span class="nn">o</span><span class="p">:</span><span class="s s-Atom">number</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="p">.</span><span class="s s-Atom">decl</span> <span class="nf">literal_symbol</span><span class="p">(</span><span class="nn">s</span><span class="p">:</span><span class="s s-Atom">symbol</span><span class="p">,</span> <span class="nn">o</span><span class="p">:</span><span class="s s-Atom">symbol</span><span class="p">)</span>
+</code></pre></div>
+<p>Under the hood, this is a two step process:</p>
+<ol>
+<li>convert the data to RDF using the <a href="https://linkml.io/linkml/data/rdf.html">standard rdflib dumper</a></li>
+<li>convert triple to the tuples above<ul>
+<li>each triple is mapped to triple/3 facts</li>
+<li>if the object is a literal:<ul>
+<li>it is serialized as a json string</li>
+<li>an additional fact is added mapping this to a souffle number or symbol</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
 <p>Every slot-value assignment is turned into a triple. If the value is a literal/atom then an additional fact is added mapping the node to the number or symbol value.</p>
 <h2 id="execution">Execution</h2>
 <p><code>linkml_datalog.engines.datalog_engine</code> will do this compilation, translate your data to relational facts, then wrap calls to Souffle</p>
+<p>Note that Souffle needs to be on the command line for this to work</p>
+<p>Generated programs and facts will be placed in a temporary working directory, unless <code>-d</code> is passed.</p>
 <h2 id="parsing">Parsing</h2>
-<p>The engine will then read back all <code>validation_result</code> facts and translate these to the LinkML validation data model (influenced by SHACL)</p>
-<h2 id="inferences">Inferences</h2>
-<p>Currently other inferred facts are not read back in, but in future a new data object will be created.</p>
+<p>The engine will then read back all <code>validation_result</code> facts and translate these to the LinkML validation data model,
+and will walk the input object reading any new inferences</p>
 
               
             </article>
@@ -572,7 +597,7 @@ validation_result(
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.tabs.link"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
     
     
       <script src="../assets/javascripts/bundle.960e086b.min.js"></script>
