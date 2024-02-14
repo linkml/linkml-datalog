@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 import yaml
+from deprecated.classic import deprecated
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schemaview import SchemaView
 

@@ -27,10 +27,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-linkml = "^1.1.13"
+linkml = "^1.7.2"
+snakelog = "^0.1.0"
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
 mkdocs = "^1.2.3"
 mkdocs-material = "^8.1.8"
 
@@ -40,3 +41,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 linkml-dl = "linkml_datalog.engines.datalog_engine:cli"
+gen-datalog = "linkml_datalog.generators.dataloggen:cli"

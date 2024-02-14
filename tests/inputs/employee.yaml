@@ -12,6 +12,7 @@ imports:
   - linkml:types
 
 default_prefix: ex
+default_range: string
 
 subsets:
   mysubset: {}

@@ -1,6 +1,6 @@
 # Translations of LinkML to Datalog
 
-LinkML is primarily a data modeling language in the mold of
+LinkML is primarily a data modeling language in the vein of
 JSON-Schema, UML, or a shape language like SHACL. The core is
 deliberately simple and does not have complex semantics.
 
@@ -66,6 +66,26 @@ This will generate
 
 ```yaml
 sibling_of(i,j) :- sibling_of(j,i).
+```
+
+## Transitive closures over
+
+LinkML 1.2 will introduce [transitive_form_of](https://w3id.org/linkml/transitive_form_of),
+to declare that one slot (e.g. `ancestor_of`) is the transitive form of another slot (e.g `parent_of`)
+
+For now, you can get the same semantics from an annotation:
+
+```yaml
+ancestor_of:
+  annotations:
+    transitive_closure_of: parent_of
+```
+
+This will generate
+
+```yaml
+ancestor_of(i,j) :- parent_of(j,i).
+ancestor_of(i,j) :- parent_of(j,z), ancestor_of(z,j).
 ```
 
 ## Association classes

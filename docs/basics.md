@@ -1,23 +1,27 @@
-# Basics
+# How it works
+
+## Overview
 
 The linkml-dl wrapper works by executing the following steps:
 
- 1. The schema is compiled to Souffle DL problem (see generated schema.dl file)
- 2. Any embedded logic program in the schema is also added
- 3. Data is converted to generic triple-like tuples (see `*.facts`)
- 4. Souffle is executed
- 5. Inferred validation results turned into objects
- 6. TODO: other inferred facts are incorporated back into objects
+- The schema is compiled to Souffle DL problem (see generated schema.dl file)
+- Any embedded logic program in the schema is also added
+- Data is converted to generic triple-like tuples (see `*.facts`)
+- Souffle is executed
+- Inferred facts are collected:
+    - validation results are collected into a results object
+    - inferred facts are incorporated into new copy of the input object
 
-## Compilation
+## Compilation of schemas to Datalog
 
 Assuming input like this:
 
 ```yaml
 classes:
   Person:
+    class_uri: schema:Person
     attributes:
-      age:
+      age_in_years:
         range: integer
         maximum_value: 999
 ```
@@ -25,6 +29,12 @@ classes:
 The generated souffle program will look like this:
 
 ```prolog
+.decl Person(i: symbol)
+.decl Person_asserted(i: identifier)
+.output Person
+Person_asserted(i) :- triple(i, RDF_TYPE, "http://schema.org/Person").
+Person(i) :- Person_asserted(i).
+
 .decl Person_age_in_years_asserted(i: identifier, v: value)
 .decl Person_age_in_years(i: identifier, v: value)
 .output Person_age_in_years
@@ -50,9 +60,9 @@ validation_result(
 
 (note that most users never need to see these programs, but if you want to write advanced rules it is useful to understand the structure)
 
-## Facts
+## Conversion of data to Facts
 
-The linkml data file (which can be JSON, YAML, RDF, or TSV) is converted to a triple-like model following the souffle spec:
+The LinkML data file is converted to a triple-like model following the souffle spec:
 
 ```prolog
 .decl triple(s:symbol, p:symbol, o:symbol)
@@ -60,16 +70,27 @@ The linkml data file (which can be JSON, YAML, RDF, or TSV) is converted to a tr
 .decl literal_symbol(s:symbol, o:symbol)
 ```
 
+Under the hood, this is a two step process:
+
+1. convert the data to RDF using the [standard rdflib dumper](https://linkml.io/linkml/data/rdf.html)
+2. convert triple to the tuples above
+    - each triple is mapped to triple/3 facts
+    - if the object is a literal:
+         - it is serialized as a json string
+         - an additional fact is added mapping this to a souffle number or symbol
+
 Every slot-value assignment is turned into a triple. If the value is a literal/atom then an additional fact is added mapping the node to the number or symbol value.
 
 ## Execution
 
 `linkml_datalog.engines.datalog_engine` will do this compilation, translate your data to relational facts, then wrap calls to Souffle
 
+Note that Souffle needs to be on the command line for this to work
+
+Generated programs and facts will be placed in a temporary working directory, unless `-d` is passed.
+
 ## Parsing
 
-The engine will then read back all `validation_result` facts and translate these to the LinkML validation data model (influenced by SHACL)
+The engine will then read back all `validation_result` facts and translate these to the LinkML validation data model,
+and will walk the input object reading any new inferences
 
-## Inferences
-
-Currently other inferred facts are not read back in, but in future a new data object will be created.
