@@ -2,13 +2,16 @@ import csv
 import json
 import os
 import subprocess
+import sys
+import tempfile
 from dataclasses import dataclass
-from typing import Any, Dict, List, Union, Tuple
+from typing import Dict, List, Union, Tuple
 
-import yaml
 import logging
 
+from rdflib import Graph
 import click
+
 from linkml.generators.pythongen import PythonGenerator
 from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.linkml_model import SlotDefinitionName
@@ -16,7 +19,8 @@ from linkml_runtime.utils.compile_python import compile_python
 from linkml_runtime.utils.formatutils import underscore
 from linkml_runtime.utils.schemaview import SchemaView, ClassDefinitionName
 from linkml_runtime.utils.yamlutils import YAMLRoot
-from rdflib import Graph
+
+#import linkml_dataops
 
 from linkml_datalog.dumpers.tupledumper import TupleDumper
 from linkml_datalog.generators.dataloggen import DatalogGenerator
@@ -24,29 +28,31 @@ from linkml.utils.datautils import _get_format, infer_root_class, get_loader, du
 from linkml_datalog.model.validation import ValidationReport, ValidationResult
 
 
-def runcmd(cmd: str) -> int:
-    status = os.system(cmd)
-    logging.info(f'{status} CMD: {cmd}')
-    if status != 0:
-        raise Exception(f'Error running" {cmd}')
-    return status
-
 @dataclass
 class DatalogEngine:
     """
-    Engine for performing datalog operations on linkml data
-
-    ALPHA
-
-    uses DatalogDumper
-
+    Engine for performing datalog inference using LinkML schemas and data compiled to Datalog
     """
     sv: SchemaView = None
     workdir: str = None
 
     def run(self, obj: Union[YAMLRoot, Graph], prefix_map: Dict[str, str] = None, strict=True):
         """
-        Run datalog inference over a data object
+        Run datalog inference over a data object.
+
+        This uses ref:`DatalogGenerator` to export schema to datalog rules (schema.dl).
+        These input from rdf/3 and rdfn/3-tuple format, and output to domain-specific predicates,
+        e.g. Person_name/2, as well as validation_result/6.
+
+        The data is converted using ref:`TupleDumper` to dump object to CSVs for Souffle.
+        These follow a generic triple pattern.
+
+        Souffle is executed on the resulting working directory.
+
+        :param obj:
+        :param prefix_map:
+        :param strict:
+        :return:
         """
         sv = self.sv
         workdir = self.workdir
@@ -58,28 +64,39 @@ class DatalogEngine:
         dumper.dump(obj, sv, directory=workdir, prefix_map=prefix_map)
         result = subprocess.run(['souffle', f'-F{workdir}', f'-D{workdir}', f'{workdir}/schema.dl'],
                                 capture_output=True)
-        print(f'STDERR: {result.stderr}')
+        logging.warning(f'STDERR: {result.stderr}')
         if result.stderr:
             logging.error(f'STDERR: {result.stderr}')
         if result.stdout:
-            logging.error(f'STDOUT: {result.stdout}')
+            logging.info(f'STDOUT: {result.stdout}')
         result.check_returncode()
         if strict and result.stderr:
             raise Exception(f'Got warnings: {result.stderr}')
-        #runcmd(f'souffle -F{workdir} -D{workdir} {workdir}/schema.dl')
 
     def _parse_results(self, pred: str) -> List[List[str]]:
+        """
+        Parses Souffle results, which are stored as tsvs in the working directory
+
+        :param pred:
+        :return:
+        """
         with open(os.path.join(self.workdir, f'{pred}.csv')) as csvfile:
             reader = csv.reader(csvfile, delimiter='\t', quotechar='|')
             return [row for row in reader]
 
     def validation_results(self) -> ValidationReport:
         """
-        Retrieves validation results, after running souffle
+        Retrieves validation results
+
+        Should be called after :ref:`run`
         """
+        # The compile souffle program using the predicate validation_result/6
+        # for results
         rows = self._parse_results('validation_result')
         results = []
         for [typ, subject, cls, pred, val, info] in rows:
+            if subject.startswith("_:"):
+                subject = None
             result = ValidationResult(type=typ,
                                       subject=subject,
                                       instantiates=cls,
@@ -90,13 +107,23 @@ class DatalogEngine:
         return ValidationReport(results=results)
 
     def inferred_slot_values(self, cn: ClassDefinitionName, sn: SlotDefinitionName) -> List[Tuple[str, str]]:
+        """
+        Retrieve inferences as tuples.
+
+        TODO: avoid reloading repeatedly
+
+        :param cn:
+        :param sn:
+        :return:
+        """
         return [(r[0], r[1]) for r in self._parse_results(f'{cn}_{sn}')]
 
     def materialize_inferences(self, obj: YAMLRoot) -> None:
         # TODO: potentially redo, get all inferred triples first
-        print(f'MAT {obj} {type(obj)}')
+        #print(f'MAT {obj} {type(obj)}')
         if obj is None:
             return
+        # recurse down tree
         if isinstance(obj, list):
             for x in obj:
                 self.materialize_inferences(x)
@@ -116,14 +143,52 @@ class DatalogEngine:
             id_val = getattr(obj, id_slot.name)
         else:
             id_val = None
+
+        def _curie_for(v: str) -> str:
+            if v.startswith("_:"):
+                return v
+            elif v.startswith("http"):
+                sv.namespaces().curie_for(v)
+            else:
+                return v
+
         for islot in sv.class_induced_slots(cn):
             sn = underscore(islot.name)
             if id_val:
+                obj_uri = sv.expand_curie(id_val)
+                #print(f'CHECKINGx: {cn}.{id_val}.{sn} ({obj_uri}) {type(obj)} {obj}')
                 # TODO: optimize
-                for row in self._parse_results(sn):
+                for row in self.inferred_slot_values(cn, sn):
                     # TODO: CURIE expansion
-                    if row[0] == id_val:
-                        setattr(obj, sn, row[1])
+                    # print(f'  TESTING: {row} // {row[0]} == {obj_uri}')
+                    if row[0] == obj_uri:
+                        v = row[1]
+                        if islot.range in sv.all_classes():
+                            # contract
+                            v = _curie_for(v)
+                        elif islot.range in sv.all_enums():
+                            v = _curie_for(v)
+                        else:
+                            if v is not None:
+                                v = json.loads(v)
+                            ##if v.startswith('"'):
+                            #    # TODO
+                            #    v = v.replace('"', '')
+                            #else:
+                            #    # TODO
+                            #    v = v
+                        #print(f'  ***Using inference: {sn} {row} v = {v}')
+                        # TODO: lists
+                        if islot.multivalued:
+                            curr = getattr(obj, sn)
+                            if isinstance(curr, list):
+                                if v not in curr:
+                                    curr.append(v)
+                            else:
+                                raise ValueError(f'Cannot handle {cn}.{id_val}.{sn} {type(curr)} == {curr}')
+                        else:
+                            if getattr(obj, sn, None) != v:
+                                setattr(obj, sn, v)
             if islot.range in sv.all_classes():
                 self.materialize_inferences(getattr(obj, sn))
 
@@ -132,22 +197,32 @@ class DatalogEngine:
 
 
 
-
-
-
-
 @click.command()
-@click.option('--dir', '-d', required=True, help='Directory to export to')
-@click.option('--schema', '-s', required=True, help='Path to schema')
+@click.option("--workdir", "-d", required=False,
+              help="Working directory in which intermediate results are stored")
+@click.option("--schema", "-s", required=True,
+              help="Path to LinkML schema in YAML")
+@click.option("--validate-only/--no-validate-only", default=False, show_default=True,
+              help="Do not materialize inferences, only generate validation results")
+@click.option("--output", "-o",
+              type=click.File(mode="w"),
+              default=sys.stdout,
+              help="Path to output file")
+@click.option("--report", "-e",
+              type=click.File(mode="w"),
+              default=sys.stderr,
+              show_default=True,
+              help="Path to validation report file")
 @click.option("--input-format", "-f",
               type=click.Choice(list(dumpers_loaders.keys())),
               help="Input format. Inferred from input suffix if not specified")
 @click.option("--target-class", "-C",
-              help="name of class in datamodel that the root node instantiates")
+              help="name of class in datamodel that the root node instantiates. Inferred if not present")
 @click.option("--module", "-m",
-              help="Path to python datamodel module")
-@click.argument('input')
-def cli(input, schema, module, target_class, input_format, dir):
+              help="Path to pre-compiled python datamodel module. If not specified, will be compiled on the fly")
+@click.option("-v", "--verbose", count=True)
+@click.argument("input")
+def cli(input, schema, module, target_class, input_format, validate_only: bool, output, report, workdir, verbose):
     """
     Performs inference and validation over input files using a linkml schema
 
@@ -156,8 +231,14 @@ def cli(input, schema, module, target_class, input_format, dir):
      - translate instance data to tuples
      - collect above in working directory
      - run souffle
+     - collect results: validation and new inferences
     """
-    logging.basicConfig(level=logging.INFO)
+    if verbose >= 2:
+        logging.basicConfig(level=logging.DEBUG)
+    elif verbose == 1:
+        logging.basicConfig(level=logging.INFO)
+    else:
+        logging.basicConfig(level=logging.WARNING)
     if module is None:
         if schema is None:
             raise Exception('must pass one of module OR schema')
@@ -168,6 +249,7 @@ def cli(input, schema, module, target_class, input_format, dir):
     sv = SchemaView(schema)
     input_format = _get_format(input, input_format)
     loader = get_loader(input_format)
+    logging.info(f'Using {loader} to load data from {input}')
     if target_class is None:
         target_class = infer_root_class(sv)
     if target_class is None:
@@ -175,10 +257,19 @@ def cli(input, schema, module, target_class, input_format, dir):
     py_target_class = python_module.__dict__[target_class]
 
     obj = loader.load(source=input,  target_class=py_target_class)
-    engine = DatalogEngine(sv, workdir=dir)
-    engine.run(obj)
-    rpt = engine.validation_results()
-    print(yaml_dumper.dumps(rpt))
+    with tempfile.TemporaryDirectory() as tmpdir:
+        if workdir is None:
+            workdir = tmpdir
+        logging.info(f'Working dir: {workdir}')
+        engine = DatalogEngine(sv, workdir=workdir)
+        engine.run(obj)
+        validation_results = engine.validation_results()
+        report.write(yaml_dumper.dumps(validation_results))
+        if not validate_only:
+            engine.materialize_inferences(obj)
+            output.write(yaml_dumper.dumps(obj))
+
+
 
 
 if __name__ == '__main__':

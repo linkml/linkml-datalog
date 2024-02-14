@@ -114,6 +114,7 @@ uri_subsumed_by("{{ gen.uri(s) }}", "{{ gen.uri(p) }}").
 
 // DOMAIN AND RANGE
 
+{% if gen.domains(s) %}
 validation_result(
   "sh:ClosedConstraintComponent",
   i,
@@ -126,6 +127,7 @@ validation_result(
     {%- for domain in gen.domains(s) -%}
     , ! {{ gen.pred(domain) }}(i)
     {%- endfor %} .
+{% endif %}
     
 {% if s.range and not s.range in schemaview.all_types() %}
 validation_result(
@@ -334,7 +336,7 @@ class Reification:
 
 class DatalogGenerator(Generator):
     """
-    Generates Souffle datalog from a LinkML schema where the domain of discourse is RDF triples
+    Generates Souffle datalog from a LinkML schema where the domain of discourse is RDF triples.
 
     """
     generatorname = os.path.basename(__file__)
@@ -462,7 +464,10 @@ class DatalogGenerator(Generator):
 
     def reification_of(self, cn: ClassDefinitionName) -> Optional[Reification]:
         """
-        TODO: move to schemaview
+        If cn is a reification, return the reification structure.
+
+        :param cn:
+        :return:
         """
         sv = self.schemaview
         if sv.is_relationship(cn):
@@ -496,7 +501,7 @@ class DatalogGenerator(Generator):
 
 @shared_arguments(DatalogGenerator)
 @click.command()
-def cli(yamlfile, dir, **kwargs):
+def cli(yamlfile, **kwargs):
     """ Generate Souffle datalog from a LinkML schema """
     print(DatalogGenerator(yamlfile, **kwargs).serialize(**kwargs))
 

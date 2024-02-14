@@ -10,6 +10,8 @@ from contextlib import redirect_stdout
 from enum import Enum
 from typing import Dict, List, Any, Union, Tuple
 
+from deprecated import deprecated
+
 DICT_OR_LIST = Union[Dict, List]
 
 class ObjType(Enum):
@@ -24,6 +26,7 @@ class ObjType(Enum):
 
 HDR = ['id', 'index', 'key', 'val_s', 'val_i', 'type']
 
+@deprecated("rdf-like export used instead")
 @dataclass
 class EavDumper:
     """

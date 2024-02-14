@@ -2,8 +2,7 @@ import unittest
 from pathlib import Path
 from typing import Type, Tuple, List
 
-import yaml
-from linkml_runtime.dumpers import rdflib_dumper, yaml_dumper
+from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schemaview import SchemaView
 
@@ -11,9 +10,8 @@ import os
 
 from linkml_runtime.utils.slot import Slot
 from linkml_runtime.utils.yamlutils import YAMLRoot
-from rdflib import Graph, ConjunctiveGraph, RDF, Namespace, URIRef, RDFS
+from rdflib import ConjunctiveGraph, RDF, Namespace, URIRef, RDFS
 
-from linkml_datalog.dumpers.tupledumper import TupleDumper
 from linkml_datalog.engines.datalog_engine import DatalogEngine
 
 from tests.models.personinfo import Container, Person
@@ -31,20 +29,29 @@ prefixes = {
 
 
 class DatalogEngineTestCase(unittest.TestCase):
+    """
+    Tests end-to-end compilation to datalog and execution.
+    """
 
     def test_engine(self):
-        """tests souffle engine"""
+        """
+        End-to-end test of the datalog engine.
+
+        Compiles a standard personinfo schema and data and runs the engine.
+        Uses example_personinfo_data, this is expected to have validation errors.
+        """
         schema_fn = os.path.join(INPUTS_DIR, "personinfo.yaml")
         data_fn = os.path.join(INPUTS_DIR, "example_personinfo_data.yaml")
-        data = yaml_loader.load(data_fn, target_class=Container)
+        data: Container = yaml_loader.load(data_fn, target_class=Container)
         directory = os.path.join(OUTPUT_DIR, 'persondata')
         Path(directory).mkdir(exist_ok=True)
         sv = SchemaView(schema_fn)
         e = DatalogEngine(sv, workdir=os.path.join(OUTPUT_DIR, 'tmp'))
         e.run(data, prefix_map=prefixes)
         rpt = e.validation_results()
-        for result in rpt.results:
-            print(f' * {result}')
+        assert len(rpt.results) > 1
+        #for result in rpt.results:
+        #    print(f' * {result}')
         def has_type(t):
             matches = [result for result in rpt.results if result.type == t]
             return matches != []
@@ -67,9 +74,13 @@ class DatalogEngineTestCase(unittest.TestCase):
                            contains=[('https://example.org/P/001', 'http://purl.obolibrary.org/obo/HsapDv_0000087'),
                                      ('https://example.org/P/006', 'http://purl.obolibrary.org/obo/HsapDv_0000086'),
                                      ])
-        #e.materialize_inferences(data)
-        #ys = yaml_dumper.dumps(data)
-        #print(ys)
+        e.materialize_inferences(data)
+        ys = yaml_dumper.dumps(data)
+        print(ys)
+        p1 = next(p for p in data.persons if p.id == 'P:001')
+        p4 = next(p for p in data.persons if p.id == 'P:004')
+        p5 = next(p for p in data.persons if p.id == 'P:005')
+        self.assertCountEqual(p5.ancestor_of, [p1.id, p4.id])
 
     def test_engine_rdf(self):
         """uses a collection of annotated named graphs as test  """
